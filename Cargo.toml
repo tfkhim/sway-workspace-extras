@@ -1,0 +1,15 @@
+[package]
+name = "sway-workspace-extras"
+version = "0.1.0"
+edition = "2021"
+description = "A set of commands to move focus or containers to new Sway workpaces"
+authors = ["Thomas Himmelstoss <9889638+tfkhim@users.noreply.github.com>"]
+license = "MIT"
+repository = "https://github.com/tfkhim/sway-workspace-extras/"
+
+[dependencies]
+clap = {version="3.2.22", features=["derive"] }
+swayipc = "3.0.1"
+
+[profile.release]
+lto = true
