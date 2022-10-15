@@ -12,14 +12,17 @@ use swayipc::Node;
 use swayipc::NodeType;
 
 pub struct Workspaces<'a> {
-    nodes: Vec<&'a Node>,
+    workspaces: Vec<Workspace<'a>>,
 }
 
 impl<'a> Workspaces<'a> {
     pub fn new(tree: &'a Node) -> Self {
-        Workspaces {
-            nodes: tree.find_all_nodes_by(|node| node.node_type == NodeType::Workspace),
-        }
+        let workspaces = tree
+            .find_all_nodes_by(|node| node.node_type == NodeType::Workspace)
+            .into_iter()
+            .filter_map(Workspace::new)
+            .collect();
+        Self { workspaces }
     }
 
     pub fn predecessor_of_focused(&self) -> i32 {
@@ -31,17 +34,36 @@ impl<'a> Workspaces<'a> {
     }
 
     fn find_focused_workspace(&self) -> Option<i32> {
-        self.nodes
+        self.workspaces
             .iter()
-            .find(|w| w.has_focused_child())
-            .and_then(|w| w.num)
+            .find(|w| w.is_focused())
+            .map(|w| w.num)
     }
 
     pub fn last_non_empty_workspace(&self) -> Option<i32> {
-        self.nodes
+        self.workspaces
             .iter()
-            .filter(|w| w.has_child_nodes())
-            .filter_map(|w| w.num)
+            .filter(|w| w.contains_windows())
+            .map(|w| w.num)
             .max()
+    }
+}
+
+struct Workspace<'a> {
+    node: &'a Node,
+    num: i32,
+}
+
+impl<'a> Workspace<'a> {
+    fn new(node: &'a Node) -> Option<Self> {
+        node.num.map(|num| Self { num, node })
+    }
+
+    fn contains_windows(&self) -> bool {
+        !self.node.nodes.is_empty() || !self.node.floating_nodes.is_empty()
+    }
+
+    fn is_focused(&self) -> bool {
+        self.node.find_as_ref(|n| n.focused).is_some()
     }
 }
