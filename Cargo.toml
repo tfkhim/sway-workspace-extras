@@ -10,6 +10,7 @@ repository = "https://github.com/tfkhim/sway-workspace-extras/"
 [dependencies]
 clap = {version="4.0.15", features=["derive"] }
 swayipc = "3.0.1"
+thiserror = "1.0.37"
 
 [profile.release]
 lto = true

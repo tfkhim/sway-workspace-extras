@@ -7,14 +7,17 @@
  * received a copy of the license along with this program.
  */
 
+mod error;
 mod node_ext;
 mod workspace;
 
 use clap::{Parser, Subcommand};
 use core::cmp::{max, min};
+use error::CommandErrorConversion;
+use error::Error;
+use std::process::ExitCode;
+use std::process::Termination;
 use swayipc::Connection;
-use swayipc::Error;
-use swayipc::Fallible;
 use swayipc::Node;
 use workspace::Workspaces;
 
@@ -33,8 +36,15 @@ enum Commands {
     MovePrev,
 }
 
-fn main() -> Result<(), Error> {
-    let cli = Cli::parse();
+fn main() -> ExitCode {
+    match run_program() {
+        Ok(success) => success.report(),
+        Err(error) => error.report(),
+    }
+}
+
+fn run_program() -> Result<(), Error> {
+    let cli = Cli::try_parse()?;
 
     let mut connection = Connection::new()?;
 
@@ -84,7 +94,7 @@ fn find_previous_workspace(tree: &Node) -> i32 {
 
 fn move_focus_to_workspace(connection: &mut Connection, workspace_num: i32) -> Result<(), Error> {
     let command = format!("workspace {}", workspace_num);
-    connection.run_command(command).and_then(collect_errors)
+    connection.run_command(command).convert_errors()
 }
 
 fn move_container_to_workspace(
@@ -92,10 +102,5 @@ fn move_container_to_workspace(
     workspace_num: i32,
 ) -> Result<(), Error> {
     let command = format!("move container to workspace {}", workspace_num);
-    connection.run_command(command).and_then(collect_errors)
-}
-
-fn collect_errors(results: Vec<Fallible<()>>) -> Result<(), Error> {
-    let mut errors = results.into_iter().filter_map(Result::err);
-    errors.next().map(Err).unwrap_or(Ok(()))
+    connection.run_command(command).convert_errors()
 }
