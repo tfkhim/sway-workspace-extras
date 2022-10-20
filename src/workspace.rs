@@ -14,31 +14,44 @@ use swayipc::NodeType;
 
 pub struct Workspaces<'a> {
     workspaces: Vec<Workspace<'a>>,
+    focused_workspace: Workspace<'a>,
 }
 
 impl<'a> Workspaces<'a> {
     pub fn new(tree: &'a Node) -> Result<Self, Error> {
+        let workspaces = Self::collect_regular_workspaces(tree)?;
+        let focused_workspace = Self::find_focused_workspace(&workspaces)?;
+
+        Ok(Self {
+            workspaces,
+            focused_workspace,
+        })
+    }
+
+    fn collect_regular_workspaces(tree: &'a Node) -> Result<Vec<Workspace<'a>>, Error> {
         tree.find_all_nodes_by(|node| node.node_type == NodeType::Workspace)
             .into_iter()
             .filter(|w| !w.is_scratchpad_workspace())
             .map(Workspace::new)
-            .collect::<Result<_, _>>()
-            .map(|workspaces| Self { workspaces })
+            .collect::<Result<Vec<_>, _>>()
+    }
+
+    fn find_focused_workspace(workspaces: &[Workspace<'a>]) -> Result<Workspace<'a>, Error> {
+        workspaces
+            .iter()
+            .find(|w| w.is_focused())
+            .cloned()
+            .ok_or_else(|| {
+                Error::Validation("Could not find a workspace which has focus".to_owned())
+            })
     }
 
     pub fn predecessor_of_focused(&self) -> i32 {
-        self.find_focused_workspace().unwrap_or(0) - 1
+        self.focused_workspace.num - 1
     }
 
     pub fn successor_of_focused(&self) -> i32 {
-        self.find_focused_workspace().unwrap_or(0) + 1
-    }
-
-    fn find_focused_workspace(&self) -> Option<i32> {
-        self.workspaces
-            .iter()
-            .find(|w| w.is_focused())
-            .map(|w| w.num)
+        self.focused_workspace.num + 1
     }
 
     pub fn last_non_empty_workspace(&self) -> Option<i32> {
@@ -50,6 +63,7 @@ impl<'a> Workspaces<'a> {
     }
 }
 
+#[derive(Debug, Clone)]
 struct Workspace<'a> {
     node: &'a Node,
     num: i32,
