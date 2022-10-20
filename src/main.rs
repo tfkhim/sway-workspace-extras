@@ -18,7 +18,6 @@ use error::Error;
 use std::process::ExitCode;
 use std::process::Termination;
 use swayipc::Connection;
-use swayipc::Node;
 use workspace::Workspaces;
 
 #[derive(Parser)]
@@ -58,18 +57,19 @@ fn run_program() -> Result<(), Error> {
 
 fn execute_next(connection: &mut Connection) -> Result<(), Error> {
     let tree = connection.get_tree()?;
-    let next_workspace = find_next_workspace(&tree);
+    let workspaces = Workspaces::new(&tree)?;
+    let next_workspace = find_next_workspace(&workspaces);
     move_focus_to_workspace(connection, next_workspace)
 }
 
 fn execute_move_next(connection: &mut Connection) -> Result<(), Error> {
     let tree = connection.get_tree()?;
-    let next_workspace = find_next_workspace(&tree);
+    let workspaces = Workspaces::new(&tree)?;
+    let next_workspace = find_next_workspace(&workspaces);
     move_container_to_workspace(connection, next_workspace)
 }
 
-fn find_next_workspace(tree: &Node) -> i32 {
-    let workspaces = Workspaces::new(tree);
+fn find_next_workspace(workspaces: &Workspaces) -> i32 {
     let last_workspace = workspaces.last_non_empty_workspace();
     let next_workspace = workspaces.successor_of_focused();
     min(next_workspace, last_workspace.unwrap_or(0) + 1)
@@ -77,18 +77,19 @@ fn find_next_workspace(tree: &Node) -> i32 {
 
 fn execute_previous(connection: &mut Connection) -> Result<(), Error> {
     let tree = connection.get_tree()?;
-    let prev_workspace = find_previous_workspace(&tree);
+    let workspaces = Workspaces::new(&tree)?;
+    let prev_workspace = find_previous_workspace(&workspaces);
     move_focus_to_workspace(connection, prev_workspace)
 }
 
 fn execute_move_prev(connection: &mut Connection) -> Result<(), Error> {
     let tree = connection.get_tree()?;
-    let prev_workspace = find_previous_workspace(&tree);
+    let workspaces = Workspaces::new(&tree)?;
+    let prev_workspace = find_previous_workspace(&workspaces);
     move_container_to_workspace(connection, prev_workspace)
 }
 
-fn find_previous_workspace(tree: &Node) -> i32 {
-    let workspaces = Workspaces::new(tree);
+fn find_previous_workspace(workspaces: &Workspaces) -> i32 {
     max(workspaces.predecessor_of_focused(), 1)
 }
 

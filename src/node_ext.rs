@@ -13,6 +13,8 @@ pub trait NodeExt {
     fn find_all_nodes_by<F>(&self, predicate: F) -> Vec<&Node>
     where
         F: Copy + Fn(&Node) -> bool;
+
+    fn is_scratchpad_workspace(&self) -> bool;
 }
 
 impl NodeExt for Node {
@@ -35,5 +37,12 @@ impl NodeExt for Node {
         let mut result_nodes = Vec::<&Node>::new();
         find_all_nodes_by_rec(self, predicate, &mut result_nodes);
         result_nodes
+    }
+
+    fn is_scratchpad_workspace(&self) -> bool {
+        self.name
+            .as_ref()
+            .map(|n| n == "__i3_scratch")
+            .unwrap_or(false)
     }
 }

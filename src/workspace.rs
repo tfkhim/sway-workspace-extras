@@ -7,6 +7,7 @@
  * received a copy of the license along with this program.
  */
 
+use crate::error::Error;
 use crate::node_ext::NodeExt;
 use swayipc::Node;
 use swayipc::NodeType;
@@ -16,13 +17,13 @@ pub struct Workspaces<'a> {
 }
 
 impl<'a> Workspaces<'a> {
-    pub fn new(tree: &'a Node) -> Self {
-        let workspaces = tree
-            .find_all_nodes_by(|node| node.node_type == NodeType::Workspace)
+    pub fn new(tree: &'a Node) -> Result<Self, Error> {
+        tree.find_all_nodes_by(|node| node.node_type == NodeType::Workspace)
             .into_iter()
-            .filter_map(Workspace::new)
-            .collect();
-        Self { workspaces }
+            .filter(|w| !w.is_scratchpad_workspace())
+            .map(Workspace::new)
+            .collect::<Result<_, _>>()
+            .map(|workspaces| Self { workspaces })
     }
 
     pub fn predecessor_of_focused(&self) -> i32 {
@@ -55,8 +56,13 @@ struct Workspace<'a> {
 }
 
 impl<'a> Workspace<'a> {
-    fn new(node: &'a Node) -> Option<Self> {
-        node.num.map(|num| Self { num, node })
+    fn new(node: &'a Node) -> Result<Self, Error> {
+        node.num
+            .ok_or_else(|| {
+                let msg = format!("The num property of workspace with id {} is None", node.id);
+                Error::Validation(msg)
+            })
+            .map(|num| Self { num, node })
     }
 
     fn contains_windows(&self) -> bool {

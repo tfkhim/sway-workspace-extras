@@ -23,6 +23,8 @@ pub enum Error {
     SwayIpc(#[from] SwayIpcError),
     #[error("One or more Sway commands failed{}", format_command_errors(.0))]
     SwayCommand(Vec<SwayIpcError>),
+    #[error("{0}")]
+    Validation(String),
 }
 
 fn format_command_errors(errors: &[SwayIpcError]) -> String {
