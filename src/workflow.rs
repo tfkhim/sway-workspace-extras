@@ -36,9 +36,14 @@ impl<'a> Workflow<'a> {
 
     pub fn move_container_to_next(&self) -> Vec<Action> {
         let next_workspace = self.find_next_workspace();
-        vec![Action::MoveContainer {
-            workspace_num: next_workspace,
-        }]
+        vec![
+            Action::MoveContainer {
+                workspace_num: next_workspace,
+            },
+            Action::MoveFocus {
+                workspace_num: next_workspace,
+            },
+        ]
     }
 
     fn find_next_workspace(&self) -> i32 {
@@ -61,9 +66,14 @@ impl<'a> Workflow<'a> {
 
     pub fn move_container_to_prev(&self) -> Vec<Action> {
         let prev_workspace = self.find_previous_workspace();
-        vec![Action::MoveContainer {
-            workspace_num: prev_workspace,
-        }]
+        vec![
+            Action::MoveContainer {
+                workspace_num: prev_workspace,
+            },
+            Action::MoveFocus {
+                workspace_num: prev_workspace,
+            },
+        ]
     }
 
     fn find_previous_workspace(&self) -> i32 {
