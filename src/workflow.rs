@@ -11,7 +11,10 @@ use std::cmp::{max, min};
 
 use swayipc::Node;
 
-use crate::{error::Error, workspace::Workspaces};
+use crate::{
+    error::Error,
+    workspace::{Workspace, Workspaces},
+};
 
 pub enum Action {
     MoveFocus { workspace_num: i32 },
@@ -28,14 +31,14 @@ impl<'a> Workflow<'a> {
     }
 
     pub fn move_focus_to_next(&self) -> Vec<Action> {
-        let next_workspace = self.find_next_workspace();
+        let next_workspace = self.find_next_workspace(|_| true);
         vec![Action::MoveFocus {
             workspace_num: next_workspace,
         }]
     }
 
     pub fn move_container_to_next(&self) -> Vec<Action> {
-        let next_workspace = self.find_next_workspace();
+        let next_workspace = self.find_next_workspace(Workspace::contains_not_focused_container);
         vec![
             Action::MoveContainer {
                 workspace_num: next_workspace,
@@ -46,15 +49,28 @@ impl<'a> Workflow<'a> {
         ]
     }
 
-    fn find_next_workspace(&self) -> i32 {
-        let last_non_empty_workspace = self.workspaces.last_non_empty_workspace();
-        let focused_workspace = self.workspaces.focused_workspace().workspace_number();
+    fn find_next_workspace<F>(&self, allow_extra_workspace: F) -> i32
+    where
+        F: Fn(&Workspace<'a>) -> bool,
+    {
+        let next_workspace_num = self.workspaces.focused_workspace().workspace_number() + 1;
         min(
-            focused_workspace + 1,
-            last_non_empty_workspace
-                .map(|w| w.workspace_number() + 1)
-                .unwrap_or(1),
+            next_workspace_num,
+            self.max_workspace_number(allow_extra_workspace),
         )
+    }
+
+    fn max_workspace_number<F: Fn(&Workspace<'a>) -> bool>(&self, allow_extra_workspace: F) -> i32 {
+        self.workspaces
+            .last_non_empty_workspace()
+            .map(|w| {
+                if allow_extra_workspace(&w) {
+                    w.workspace_number() + 1
+                } else {
+                    w.workspace_number()
+                }
+            })
+            .unwrap_or(1)
     }
 
     pub fn move_focus_to_prev(&self) -> Vec<Action> {

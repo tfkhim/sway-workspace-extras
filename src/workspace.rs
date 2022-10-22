@@ -86,4 +86,12 @@ impl<'a> Workspace<'a> {
     pub fn is_focused(&self) -> bool {
         self.node.find_as_ref(|n| n.focused).is_some()
     }
+
+    pub fn contains_not_focused_container(&self) -> bool {
+        self.node
+            .nodes
+            .iter()
+            .chain(self.node.floating_nodes.iter())
+            .any(|node| !node.focused)
+    }
 }
