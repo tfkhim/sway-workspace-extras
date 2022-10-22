@@ -46,25 +46,21 @@ impl<'a> Workspaces<'a> {
             })
     }
 
-    pub fn predecessor_of_focused(&self) -> i32 {
-        self.focused_workspace.num - 1
+    pub fn focused_workspace(&self) -> Workspace<'a> {
+        self.focused_workspace.clone()
     }
 
-    pub fn successor_of_focused(&self) -> i32 {
-        self.focused_workspace.num + 1
-    }
-
-    pub fn last_non_empty_workspace(&self) -> Option<i32> {
+    pub fn last_non_empty_workspace(&self) -> Option<Workspace<'a>> {
         self.workspaces
             .iter()
             .filter(|w| w.contains_windows())
-            .map(|w| w.num)
-            .max()
+            .max_by_key(|w| w.num)
+            .cloned()
     }
 }
 
 #[derive(Debug, Clone)]
-struct Workspace<'a> {
+pub struct Workspace<'a> {
     node: &'a Node,
     num: i32,
 }
@@ -79,11 +75,15 @@ impl<'a> Workspace<'a> {
             .map(|num| Self { num, node })
     }
 
-    fn contains_windows(&self) -> bool {
+    pub fn workspace_number(&self) -> i32 {
+        self.num
+    }
+
+    pub fn contains_windows(&self) -> bool {
         !self.node.nodes.is_empty() || !self.node.floating_nodes.is_empty()
     }
 
-    fn is_focused(&self) -> bool {
+    pub fn is_focused(&self) -> bool {
         self.node.find_as_ref(|n| n.focused).is_some()
     }
 }
