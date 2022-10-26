@@ -17,8 +17,16 @@ use crate::{
 };
 
 pub enum Action {
-    MoveFocus { workspace_num: i32 },
-    MoveContainer { workspace_num: i32 },
+    MoveFocus {
+        workspace_num: i32,
+    },
+    MoveContainer {
+        workspace_num: i32,
+    },
+    RenameWorkspace {
+        workspace_num: i32,
+        new_workspace_num: i32,
+    },
 }
 
 pub struct Workflow<'a> {
@@ -95,5 +103,26 @@ impl<'a> Workflow<'a> {
     fn find_previous_workspace(&self) -> i32 {
         let focused_workspace = self.workspaces.focused_workspace().workspace_number();
         max(focused_workspace - 1, 1)
+    }
+
+    pub fn shift_successors(&self) -> Vec<Action> {
+        let focused_workspace = self.workspaces.focused_workspace();
+        let expected_number_of_successor = focused_workspace.workspace_number() + 1;
+
+        let mut actions: Vec<_> = self
+            .workspaces
+            .successors_of_focused()
+            .into_iter()
+            .zip(expected_number_of_successor..)
+            .take_while(|(workspace, expected_num)| *expected_num == workspace.workspace_number())
+            .map(|(workspace, _)| Action::RenameWorkspace {
+                workspace_num: workspace.workspace_number(),
+                new_workspace_num: workspace.workspace_number() + 1,
+            })
+            .collect();
+
+        actions.reverse();
+
+        actions
     }
 }

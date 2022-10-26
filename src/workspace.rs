@@ -19,7 +19,9 @@ pub struct Workspaces<'a> {
 
 impl<'a> Workspaces<'a> {
     pub fn new(tree: &'a Node) -> Result<Self, Error> {
-        let workspaces = Self::collect_regular_workspaces(tree)?;
+        let mut workspaces = Self::collect_regular_workspaces(tree)?;
+        workspaces.sort_by_key(|w| w.num);
+
         let focused_workspace = Self::find_focused_workspace(&workspaces)?;
 
         Ok(Self {
@@ -56,6 +58,15 @@ impl<'a> Workspaces<'a> {
             .filter(|w| w.contains_windows())
             .max_by_key(|w| w.num)
             .cloned()
+    }
+
+    pub fn successors_of_focused(&self) -> Vec<Workspace<'a>> {
+        let focused_num = self.focused_workspace().workspace_number();
+        self.workspaces
+            .iter()
+            .filter(|w| w.num > focused_num)
+            .cloned()
+            .collect()
     }
 }
 

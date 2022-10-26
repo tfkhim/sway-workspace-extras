@@ -34,6 +34,7 @@ enum Commands {
     Prev,
     MoveNext,
     MovePrev,
+    Shift,
 }
 
 fn main() -> ExitCode {
@@ -56,6 +57,7 @@ fn run_program() -> Result<(), Error> {
         Commands::Prev => workflow.move_focus_to_prev(),
         Commands::MoveNext => workflow.move_container_to_next(),
         Commands::MovePrev => workflow.move_container_to_prev(),
+        Commands::Shift => workflow.shift_successors(),
     };
 
     execute_actions(&mut connection, &actions)
@@ -77,5 +79,9 @@ fn action_to_sway_command(action: &Action) -> String {
         Action::MoveContainer { workspace_num } => {
             format!("move container to workspace {}", workspace_num)
         }
+        Action::RenameWorkspace {
+            workspace_num,
+            new_workspace_num,
+        } => format!("rename workspace {workspace_num} to  {new_workspace_num}"),
     }
 }
