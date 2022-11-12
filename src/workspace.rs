@@ -8,7 +8,8 @@
  */
 
 use crate::error::Error;
-use crate::node_ext::NodeExt;
+use crate::find_all_nodes::FindAllNodes;
+use crate::is_scratchpad::IsScratchpad;
 use swayipc::Node;
 use swayipc::NodeType;
 
