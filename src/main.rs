@@ -8,7 +8,9 @@
  */
 
 mod error;
-mod node_ext;
+mod find_all_nodes;
+mod is_scratchpad;
+mod node_traits;
 mod workflow;
 mod workspace;
 
