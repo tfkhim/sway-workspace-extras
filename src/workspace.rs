@@ -10,15 +10,14 @@
 use crate::error::Error;
 use crate::find_all_nodes::FindAllNodes;
 use crate::is_scratchpad::IsScratchpad;
-use swayipc::Node;
-use swayipc::NodeType;
+use crate::node_traits::SwayNode;
 
-pub struct Workspaces<'a> {
-    workspaces: Vec<Workspace<'a>>,
-    focused_workspace: Workspace<'a>,
+pub struct Workspaces<Node> {
+    workspaces: Vec<Workspace<Node>>,
+    focused_workspace: Workspace<Node>,
 }
 
-impl<'a> Workspaces<'a> {
+impl<'a, Node: SwayNode> Workspaces<&'a Node> {
     pub fn new(tree: &'a Node) -> Result<Self, Error> {
         let mut workspaces = Self::collect_regular_workspaces(tree)?;
         workspaces.sort_by_key(|w| w.num);
@@ -31,29 +30,31 @@ impl<'a> Workspaces<'a> {
         })
     }
 
-    fn collect_regular_workspaces(tree: &'a Node) -> Result<Vec<Workspace<'a>>, Error> {
-        tree.find_all_nodes_by(|node| node.node_type == NodeType::Workspace)
+    fn collect_regular_workspaces(tree: &'a Node) -> Result<Vec<Workspace<&'a Node>>, Error> {
+        tree.find_all_nodes_by(SwayNode::is_workspace)
             .into_iter()
             .filter(|w| !w.is_scratchpad_workspace())
             .map(Workspace::new)
             .collect::<Result<Vec<_>, _>>()
     }
 
-    fn find_focused_workspace(workspaces: &[Workspace<'a>]) -> Result<Workspace<'a>, Error> {
+    fn find_focused_workspace(
+        workspaces: &[Workspace<&'a Node>],
+    ) -> Result<Workspace<&'a Node>, Error> {
         workspaces
             .iter()
             .find(|w| w.is_focused())
-            .cloned()
+            .copied()
             .ok_or_else(|| {
                 Error::Validation("Could not find a workspace which has focus".to_owned())
             })
     }
 
-    pub fn focused_workspace(&self) -> Workspace<'a> {
-        self.focused_workspace.clone()
+    pub fn focused_workspace(&self) -> Workspace<&'a Node> {
+        self.focused_workspace
     }
 
-    pub fn last_non_empty_workspace(&self) -> Option<Workspace<'a>> {
+    pub fn last_non_empty_workspace(&self) -> Option<Workspace<&'a Node>> {
         self.workspaces
             .iter()
             .filter(|w| w.contains_windows())
@@ -61,7 +62,7 @@ impl<'a> Workspaces<'a> {
             .cloned()
     }
 
-    pub fn successors_of_focused(&self) -> Vec<Workspace<'a>> {
+    pub fn successors_of_focused(&self) -> Vec<Workspace<&'a Node>> {
         let focused_num = self.focused_workspace().workspace_number();
         self.workspaces
             .iter()
@@ -71,17 +72,20 @@ impl<'a> Workspaces<'a> {
     }
 }
 
-#[derive(Debug, Clone)]
-pub struct Workspace<'a> {
-    node: &'a Node,
+#[derive(Debug, Copy, Clone)]
+pub struct Workspace<Node> {
+    node: Node,
     num: i32,
 }
 
-impl<'a> Workspace<'a> {
+impl<'a, Node: SwayNode> Workspace<&'a Node> {
     fn new(node: &'a Node) -> Result<Self, Error> {
-        node.num
+        node.get_num()
             .ok_or_else(|| {
-                let msg = format!("The num property of workspace with id {} is None", node.id);
+                let msg = format!(
+                    "The num property of workspace with id {} is None",
+                    node.get_id()
+                );
                 Error::Validation(msg)
             })
             .map(|num| Self { num, node })
@@ -92,18 +96,18 @@ impl<'a> Workspace<'a> {
     }
 
     pub fn contains_windows(&self) -> bool {
-        !self.node.nodes.is_empty() || !self.node.floating_nodes.is_empty()
+        !self.node.get_nodes().is_empty() || !self.node.get_floating_nodes().is_empty()
     }
 
     pub fn is_focused(&self) -> bool {
-        self.node.find_as_ref(|n| n.focused).is_some()
+        self.node.find_as_ref(|n| n.is_focused()).is_some()
     }
 
     pub fn contains_not_focused_container(&self) -> bool {
         self.node
-            .nodes
+            .get_nodes()
             .iter()
-            .chain(self.node.floating_nodes.iter())
-            .any(|node| !node.focused)
+            .chain(self.node.get_floating_nodes().iter())
+            .any(|node| !node.is_focused())
     }
 }

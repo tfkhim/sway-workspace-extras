@@ -9,10 +9,9 @@
 
 use std::cmp::{max, min};
 
-use swayipc::Node;
-
 use crate::{
     error::Error,
+    node_traits::SwayNode,
     workspace::{Workspace, Workspaces},
 };
 
@@ -29,11 +28,11 @@ pub enum Action {
     },
 }
 
-pub struct Workflow<'a> {
-    workspaces: Workspaces<'a>,
+pub struct Workflow<Node> {
+    workspaces: Workspaces<Node>,
 }
 
-impl<'a> Workflow<'a> {
+impl<'a, Node: SwayNode> Workflow<&'a Node> {
     pub fn new(tree: &'a Node) -> Result<Self, Error> {
         Workspaces::new(tree).map(|workspaces| Self { workspaces })
     }
@@ -59,7 +58,7 @@ impl<'a> Workflow<'a> {
 
     fn find_next_workspace<F>(&self, allow_extra_workspace: F) -> i32
     where
-        F: Fn(&Workspace<'a>) -> bool,
+        F: Fn(&Workspace<&'a Node>) -> bool,
     {
         let next_workspace_num = self.workspaces.focused_workspace().workspace_number() + 1;
         min(
@@ -68,7 +67,10 @@ impl<'a> Workflow<'a> {
         )
     }
 
-    fn max_workspace_number<F: Fn(&Workspace<'a>) -> bool>(&self, allow_extra_workspace: F) -> i32 {
+    fn max_workspace_number<F: Fn(&Workspace<&'a Node>) -> bool>(
+        &self,
+        allow_extra_workspace: F,
+    ) -> i32 {
         self.workspaces
             .last_non_empty_workspace()
             .map(|w| {
