@@ -7,21 +7,15 @@
  * received a copy of the license along with this program.
  */
 
-mod error;
-mod find_all_nodes;
-mod is_scratchpad;
-mod node_traits;
-mod workflow;
-mod workspace;
+mod application_error;
 
+use application_error::CommandErrorConversion;
+use application_error::Error;
 use clap::{Parser, Subcommand};
-use error::CommandErrorConversion;
-use error::Error;
 use std::process::ExitCode;
 use std::process::Termination;
+use sway_workspace_extras::{Action, Workflow};
 use swayipc::Connection;
-use workflow::Action;
-use workflow::Workflow;
 
 #[derive(Parser)]
 #[clap(author, version, about)]

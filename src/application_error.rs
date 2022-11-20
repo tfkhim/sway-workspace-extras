@@ -11,6 +11,7 @@ use std::process::ExitCode;
 use std::process::Termination;
 
 use clap::Error as ClapError;
+use sway_workspace_extras::TreeError;
 use swayipc::Error as SwayIpcError;
 use swayipc::Fallible;
 use thiserror::Error as ThisError;
@@ -23,8 +24,8 @@ pub enum Error {
     SwayIpc(#[from] SwayIpcError),
     #[error("One or more Sway commands failed{}", format_command_errors(.0))]
     SwayCommand(Vec<SwayIpcError>),
-    #[error("{0}")]
-    Validation(String),
+    #[error(transparent)]
+    TreeValidation(#[from] TreeError),
 }
 
 fn format_command_errors(errors: &[SwayIpcError]) -> String {

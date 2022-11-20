@@ -7,10 +7,10 @@
  * received a copy of the license along with this program.
  */
 
-use crate::error::Error;
 use crate::find_all_nodes::FindAllNodes;
 use crate::is_scratchpad::IsScratchpad;
 use crate::node_traits::SwayNode;
+use crate::tree_error::TreeError;
 
 pub struct Workspaces<Node> {
     workspaces: Vec<Workspace<Node>>,
@@ -18,7 +18,7 @@ pub struct Workspaces<Node> {
 }
 
 impl<'a, Node: SwayNode> Workspaces<&'a Node> {
-    pub fn new(tree: &'a Node) -> Result<Self, Error> {
+    pub fn new(tree: &'a Node) -> Result<Self, TreeError> {
         let mut workspaces = Self::collect_regular_workspaces(tree)?;
         workspaces.sort_by_key(|w| w.num);
 
@@ -30,7 +30,7 @@ impl<'a, Node: SwayNode> Workspaces<&'a Node> {
         })
     }
 
-    fn collect_regular_workspaces(tree: &'a Node) -> Result<Vec<Workspace<&'a Node>>, Error> {
+    fn collect_regular_workspaces(tree: &'a Node) -> Result<Vec<Workspace<&'a Node>>, TreeError> {
         tree.find_all_nodes_by(SwayNode::is_workspace)
             .into_iter()
             .filter(|w| !w.is_scratchpad_workspace())
@@ -40,14 +40,12 @@ impl<'a, Node: SwayNode> Workspaces<&'a Node> {
 
     fn find_focused_workspace(
         workspaces: &[Workspace<&'a Node>],
-    ) -> Result<Workspace<&'a Node>, Error> {
+    ) -> Result<Workspace<&'a Node>, TreeError> {
         workspaces
             .iter()
             .find(|w| w.is_focused())
             .copied()
-            .ok_or_else(|| {
-                Error::Validation("Could not find a workspace which has focus".to_owned())
-            })
+            .ok_or(TreeError::NoFocusedWorkspace())
     }
 
     pub fn focused_workspace(&self) -> Workspace<&'a Node> {
@@ -79,15 +77,9 @@ pub struct Workspace<Node> {
 }
 
 impl<'a, Node: SwayNode> Workspace<&'a Node> {
-    fn new(node: &'a Node) -> Result<Self, Error> {
+    fn new(node: &'a Node) -> Result<Self, TreeError> {
         node.get_num()
-            .ok_or_else(|| {
-                let msg = format!(
-                    "The num property of workspace with id {} is None",
-                    node.get_id()
-                );
-                Error::Validation(msg)
-            })
+            .ok_or_else(|| TreeError::MissingWorkspaceNumber(node.get_id()))
             .map(|num| Self { num, node })
     }
 

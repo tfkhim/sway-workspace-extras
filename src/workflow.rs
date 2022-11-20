@@ -10,8 +10,8 @@
 use std::cmp::{max, min};
 
 use crate::{
-    error::Error,
     node_traits::SwayNode,
+    tree_error::TreeError,
     workspace::{Workspace, Workspaces},
 };
 
@@ -33,7 +33,7 @@ pub struct Workflow<Node> {
 }
 
 impl<'a, Node: SwayNode> Workflow<&'a Node> {
-    pub fn new(tree: &'a Node) -> Result<Self, Error> {
+    pub fn new(tree: &'a Node) -> Result<Self, TreeError> {
         Workspaces::new(tree).map(|workspaces| Self { workspaces })
     }
 
