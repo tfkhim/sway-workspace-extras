@@ -15,6 +15,7 @@ use crate::{
     workspace::{Workspace, Workspaces},
 };
 
+#[derive(Debug, PartialEq, Eq)]
 pub enum Action {
     MoveFocus {
         workspace_num: i32,

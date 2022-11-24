@@ -14,5 +14,6 @@ mod tree_error;
 mod workflow;
 mod workspace;
 
+pub use crate::node_traits::{NamedNode, NodeWithChildren, SwayNode};
 pub use crate::tree_error::TreeError;
 pub use crate::workflow::{Action, Workflow};
