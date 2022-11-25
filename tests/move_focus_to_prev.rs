@@ -18,7 +18,18 @@ fn single_empty_workspace() {
         output.workspace(1).focused();
     });
 
-    let actions = when_move_focus_to_next(tree);
+    let actions = when_move_focus_to_prev(tree);
+
+    assert_eq!(actions, &[Action::MoveFocus { workspace_num: 1 }]);
+}
+
+#[test]
+fn single_non_empty_workspace() {
+    let tree = single_output(|output| {
+        output.workspace(1).add_focused_window();
+    });
+
+    let actions = when_move_focus_to_prev(tree);
 
     assert_eq!(actions, &[Action::MoveFocus { workspace_num: 1 }]);
 }
@@ -30,9 +41,9 @@ fn trailing_empty_workspace() {
         output.workspace(2).focused();
     });
 
-    let actions = when_move_focus_to_next(tree);
+    let actions = when_move_focus_to_prev(tree);
 
-    assert_eq!(actions, &[Action::MoveFocus { workspace_num: 2 }]);
+    assert_eq!(actions, &[Action::MoveFocus { workspace_num: 1 }]);
 }
 
 #[test]
@@ -42,31 +53,19 @@ fn on_last_non_empty_workspace() {
         output.workspace(2).add_focused_window();
     });
 
-    let actions = when_move_focus_to_next(tree);
+    let actions = when_move_focus_to_prev(tree);
 
-    assert_eq!(actions, &[Action::MoveFocus { workspace_num: 3 }]);
-}
-
-#[test]
-fn on_intermediate_workspace() {
-    let tree = single_output(|output| {
-        output.workspace(1).add_focused_window();
-        output.workspace(2).add_window();
-    });
-
-    let actions = when_move_focus_to_next(tree);
-
-    assert_eq!(actions, &[Action::MoveFocus { workspace_num: 2 }]);
+    assert_eq!(actions, &[Action::MoveFocus { workspace_num: 1 }]);
 }
 
 #[test]
 fn creates_empty_intermediate_workspaces() {
     let tree = single_output(|output| {
-        output.workspace(1).add_focused_window();
-        output.workspace(3).add_window();
+        output.workspace(1).add_window();
+        output.workspace(3).add_focused_window();
     });
 
-    let actions = when_move_focus_to_next(tree);
+    let actions = when_move_focus_to_prev(tree);
 
     assert_eq!(actions, &[Action::MoveFocus { workspace_num: 2 }]);
 }
@@ -79,12 +78,12 @@ fn on_empty_intermediate_workspace() {
         output.workspace(3).add_window();
     });
 
-    let actions = when_move_focus_to_next(tree);
+    let actions = when_move_focus_to_prev(tree);
 
-    assert_eq!(actions, &[Action::MoveFocus { workspace_num: 3 }]);
+    assert_eq!(actions, &[Action::MoveFocus { workspace_num: 1 }]);
 }
 
-fn when_move_focus_to_next(tree: Node) -> Vec<Action> {
+fn when_move_focus_to_prev(tree: Node) -> Vec<Action> {
     let workflow = Workflow::new(&tree).unwrap();
-    workflow.move_focus_to_next()
+    workflow.move_focus_to_prev()
 }

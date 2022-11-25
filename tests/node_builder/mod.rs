@@ -11,6 +11,15 @@ mod node;
 
 pub use self::node::Node;
 
+pub fn single_output<F>(setup: F) -> Node
+where
+    F: FnOnce(&mut OutputBuilder),
+{
+    build(|root| {
+        root.output("out-1", setup);
+    })
+}
+
 pub fn build<F>(setup: F) -> Node
 where
     F: FnOnce(&mut TreeBuilder),
