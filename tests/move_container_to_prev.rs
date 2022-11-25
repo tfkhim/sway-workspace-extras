@@ -20,13 +20,7 @@ fn single_empty_workspace() {
 
     let actions = when_move_container_to_prev(tree);
 
-    assert_eq!(
-        actions,
-        &[
-            Action::MoveContainer { workspace_num: 1 },
-            Action::MoveFocus { workspace_num: 1 }
-        ]
-    );
+    assert_eq!(actions, &[]);
 }
 
 #[test]
@@ -37,13 +31,7 @@ fn single_workspace_with_one_window() {
 
     let actions = when_move_container_to_prev(tree);
 
-    assert_eq!(
-        actions,
-        &[
-            Action::MoveContainer { workspace_num: 1 },
-            Action::MoveFocus { workspace_num: 1 }
-        ]
-    );
+    assert_eq!(actions, &[]);
 }
 
 #[test]
@@ -54,13 +42,31 @@ fn single_workspace_with_two_windows() {
 
     let actions = when_move_container_to_prev(tree);
 
-    assert_eq!(
-        actions,
-        &[
-            Action::MoveContainer { workspace_num: 1 },
-            Action::MoveFocus { workspace_num: 1 }
-        ]
-    );
+    assert_eq!(actions, &[]);
+}
+
+#[test]
+fn first_workspace_without_windows() {
+    let tree = single_output(|output| {
+        output.workspace(1).focused();
+        output.workspace(2).add_window();
+    });
+
+    let actions = when_move_container_to_prev(tree);
+
+    assert_eq!(actions, &[]);
+}
+
+#[test]
+fn first_workspace_with_window() {
+    let tree = single_output(|output| {
+        output.workspace(1).add_focused_window();
+        output.workspace(2).add_window();
+    });
+
+    let actions = when_move_container_to_prev(tree);
+
+    assert_eq!(actions, &[]);
 }
 
 #[test]

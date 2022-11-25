@@ -20,7 +20,7 @@ fn single_empty_workspace() {
 
     let actions = when_move_focus_to_prev(tree);
 
-    assert_eq!(actions, &[Action::MoveFocus { workspace_num: 1 }]);
+    assert_eq!(actions, &[]);
 }
 
 #[test]
@@ -31,7 +31,7 @@ fn single_non_empty_workspace() {
 
     let actions = when_move_focus_to_prev(tree);
 
-    assert_eq!(actions, &[Action::MoveFocus { workspace_num: 1 }]);
+    assert_eq!(actions, &[]);
 }
 
 #[test]

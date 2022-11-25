@@ -20,13 +20,7 @@ fn single_empty_workspace() {
 
     let actions = when_move_container_to_next(tree);
 
-    assert_eq!(
-        actions,
-        &[
-            Action::MoveContainer { workspace_num: 1 },
-            Action::MoveFocus { workspace_num: 1 }
-        ]
-    );
+    assert_eq!(actions, &[]);
 }
 
 #[test]
@@ -37,13 +31,7 @@ fn single_workspace_with_one_window() {
 
     let actions = when_move_container_to_next(tree);
 
-    assert_eq!(
-        actions,
-        &[
-            Action::MoveContainer { workspace_num: 1 },
-            Action::MoveFocus { workspace_num: 1 }
-        ]
-    );
+    assert_eq!(actions, &[]);
 }
 
 #[test]
@@ -72,13 +60,7 @@ fn trailing_empty_workspace() {
 
     let actions = when_move_container_to_next(tree);
 
-    assert_eq!(
-        actions,
-        &[
-            Action::MoveContainer { workspace_num: 2 },
-            Action::MoveFocus { workspace_num: 2 }
-        ]
-    );
+    assert_eq!(actions, &[]);
 }
 
 #[test]
@@ -90,13 +72,7 @@ fn on_last_workspace_with_one_window() {
 
     let actions = when_move_container_to_next(tree);
 
-    assert_eq!(
-        actions,
-        &[
-            Action::MoveContainer { workspace_num: 2 },
-            Action::MoveFocus { workspace_num: 2 }
-        ]
-    );
+    assert_eq!(actions, &[]);
 }
 
 #[test]

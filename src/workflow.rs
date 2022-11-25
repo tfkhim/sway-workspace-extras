@@ -40,28 +40,38 @@ impl<'a, Node: SwayNode> Workflow<&'a Node> {
 
     pub fn move_focus_to_next(&self) -> Vec<Action> {
         let next_workspace = self.find_next_workspace(|_| true);
-        vec![Action::MoveFocus {
-            workspace_num: next_workspace,
-        }]
+
+        if next_workspace == self.focused_workspace_number() {
+            vec![]
+        } else {
+            vec![Action::MoveFocus {
+                workspace_num: next_workspace,
+            }]
+        }
     }
 
     pub fn move_container_to_next(&self) -> Vec<Action> {
         let next_workspace = self.find_next_workspace(Workspace::contains_not_focused_container);
-        vec![
-            Action::MoveContainer {
-                workspace_num: next_workspace,
-            },
-            Action::MoveFocus {
-                workspace_num: next_workspace,
-            },
-        ]
+
+        if next_workspace == self.focused_workspace_number() {
+            vec![]
+        } else {
+            vec![
+                Action::MoveContainer {
+                    workspace_num: next_workspace,
+                },
+                Action::MoveFocus {
+                    workspace_num: next_workspace,
+                },
+            ]
+        }
     }
 
     fn find_next_workspace<F>(&self, allow_extra_workspace: F) -> i32
     where
         F: Fn(&Workspace<&'a Node>) -> bool,
     {
-        let next_workspace_num = self.workspaces.focused_workspace().workspace_number() + 1;
+        let next_workspace_num = self.focused_workspace_number() + 1;
         min(
             next_workspace_num,
             self.max_workspace_number(allow_extra_workspace),
@@ -86,31 +96,39 @@ impl<'a, Node: SwayNode> Workflow<&'a Node> {
 
     pub fn move_focus_to_prev(&self) -> Vec<Action> {
         let prev_workspace = self.find_previous_workspace();
-        vec![Action::MoveFocus {
-            workspace_num: prev_workspace,
-        }]
+        if prev_workspace == self.focused_workspace_number() {
+            vec![]
+        } else {
+            vec![Action::MoveFocus {
+                workspace_num: prev_workspace,
+            }]
+        }
     }
 
     pub fn move_container_to_prev(&self) -> Vec<Action> {
         let prev_workspace = self.find_previous_workspace();
-        vec![
-            Action::MoveContainer {
-                workspace_num: prev_workspace,
-            },
-            Action::MoveFocus {
-                workspace_num: prev_workspace,
-            },
-        ]
+
+        if prev_workspace == self.focused_workspace_number() {
+            vec![]
+        } else {
+            vec![
+                Action::MoveContainer {
+                    workspace_num: prev_workspace,
+                },
+                Action::MoveFocus {
+                    workspace_num: prev_workspace,
+                },
+            ]
+        }
     }
 
     fn find_previous_workspace(&self) -> i32 {
-        let focused_workspace = self.workspaces.focused_workspace().workspace_number();
+        let focused_workspace = self.focused_workspace_number();
         max(focused_workspace - 1, 1)
     }
 
     pub fn shift_successors(&self) -> Vec<Action> {
-        let focused_workspace = self.workspaces.focused_workspace();
-        let expected_number_of_successor = focused_workspace.workspace_number() + 1;
+        let expected_number_of_successor = self.focused_workspace_number() + 1;
 
         let mut actions: Vec<_> = self
             .workspaces
@@ -127,5 +145,9 @@ impl<'a, Node: SwayNode> Workflow<&'a Node> {
         actions.reverse();
 
         actions
+    }
+
+    fn focused_workspace_number(&self) -> i32 {
+        self.workspaces.focused_workspace().workspace_number()
     }
 }
