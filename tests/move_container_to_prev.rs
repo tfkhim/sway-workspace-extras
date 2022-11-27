@@ -78,13 +78,7 @@ fn trailing_empty_workspace() {
 
     let actions = when_move_container_to_prev(tree);
 
-    assert_eq!(
-        actions,
-        &[
-            Action::MoveContainer { workspace_num: 1 },
-            Action::MoveFocus { workspace_num: 1 }
-        ]
-    );
+    assert_eq!(actions, &[]);
 }
 
 #[test]
@@ -133,13 +127,7 @@ fn on_empty_intermediate_workspace() {
 
     let actions = when_move_container_to_prev(tree);
 
-    assert_eq!(
-        actions,
-        &[
-            Action::MoveContainer { workspace_num: 1 },
-            Action::MoveFocus { workspace_num: 1 }
-        ]
-    );
+    assert_eq!(actions, &[]);
 }
 
 fn when_move_container_to_prev(tree: Node) -> Vec<Action> {

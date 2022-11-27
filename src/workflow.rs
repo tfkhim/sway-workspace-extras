@@ -51,6 +51,10 @@ impl<'a, Node: SwayNode> Workflow<&'a Node> {
     }
 
     pub fn move_container_to_next(&self) -> Vec<Action> {
+        if self.focused_workspace_is_empty() {
+            return vec![];
+        }
+
         let next_workspace = self.find_next_workspace(Workspace::contains_not_focused_container);
 
         if next_workspace == self.focused_workspace_number() {
@@ -106,6 +110,10 @@ impl<'a, Node: SwayNode> Workflow<&'a Node> {
     }
 
     pub fn move_container_to_prev(&self) -> Vec<Action> {
+        if self.focused_workspace_is_empty() {
+            return vec![];
+        }
+
         let prev_workspace = self.find_previous_workspace();
 
         if prev_workspace == self.focused_workspace_number() {
@@ -149,5 +157,9 @@ impl<'a, Node: SwayNode> Workflow<&'a Node> {
 
     fn focused_workspace_number(&self) -> i32 {
         self.workspaces.focused_workspace().workspace_number()
+    }
+
+    fn focused_workspace_is_empty(&self) -> bool {
+        !self.workspaces.focused_workspace().contains_windows()
     }
 }

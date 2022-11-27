@@ -139,13 +139,7 @@ fn on_empty_intermediate_workspace() {
 
     let actions = when_move_container_to_next(tree);
 
-    assert_eq!(
-        actions,
-        &[
-            Action::MoveContainer { workspace_num: 3 },
-            Action::MoveFocus { workspace_num: 3 }
-        ]
-    );
+    assert_eq!(actions, &[]);
 }
 
 fn when_move_container_to_next(tree: Node) -> Vec<Action> {
