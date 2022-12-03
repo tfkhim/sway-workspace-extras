@@ -38,6 +38,7 @@ pub trait SwayNode: NodeWithChildren + NamedNode {
     fn get_id(&self) -> i64;
     fn get_num(&self) -> Option<i32>;
     fn is_workspace(&self) -> bool;
+    fn is_output(&self) -> bool;
     fn is_focused(&self) -> bool;
     fn find_as_ref<F>(&self, predicate: F) -> Option<&Self>
     where
@@ -55,6 +56,10 @@ impl SwayNode for Node {
 
     fn is_workspace(&self) -> bool {
         self.node_type == NodeType::Workspace
+    }
+
+    fn is_output(&self) -> bool {
+        self.node_type == NodeType::Output
     }
 
     fn is_focused(&self) -> bool {

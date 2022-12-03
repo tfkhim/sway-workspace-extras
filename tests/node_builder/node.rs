@@ -12,6 +12,7 @@ use sway_workspace_extras::{NamedNode, NodeWithChildren, SwayNode};
 pub struct Node {
     id: i64,
     is_workspace: bool,
+    is_output: bool,
     num: Option<i32>,
     pub(super) name: Option<String>,
     pub(super) is_focused: bool,
@@ -20,10 +21,11 @@ pub struct Node {
 }
 
 impl Node {
-    pub fn create_non_workspace_node(id: i64, name: &str) -> Self {
+    pub fn create_named_node(id: i64, name: &str) -> Self {
         Node {
             id,
             is_workspace: false,
+            is_output: false,
             num: None,
             name: Some(name.to_owned()),
             is_focused: false,
@@ -32,10 +34,17 @@ impl Node {
         }
     }
 
+    pub fn create_output(id: i64, name: &str) -> Self {
+        let mut node = Self::create_named_node(id, name);
+        node.is_output = true;
+        node
+    }
+
     pub fn create_workspace(id: i64, num: Option<i32>) -> Self {
         Node {
             id,
             is_workspace: true,
+            is_output: false,
             num,
             name: None,
             is_focused: false,
@@ -72,6 +81,10 @@ impl SwayNode for Node {
 
     fn is_workspace(&self) -> bool {
         self.is_workspace
+    }
+
+    fn is_output(&self) -> bool {
+        self.is_output
     }
 
     fn is_focused(&self) -> bool {

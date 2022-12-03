@@ -13,6 +13,8 @@ use thiserror::Error as ThisError;
 pub enum TreeError {
     #[error("The num property of workspace with id {0} is None")]
     MissingWorkspaceNumber(i64),
+    #[error("The workspace with id {0} doesn't have an output parent")]
+    MissingOutputParent(i64),
     #[error("Could not find a workspace which has focus")]
     NoFocusedWorkspace(),
 }

@@ -20,12 +20,23 @@ where
     })
 }
 
+pub fn two_outputs<F1, F2>(setup_output_1: F1, setup_output_2: F2) -> Node
+where
+    F1: FnOnce(&mut OutputBuilder),
+    F2: FnOnce(&mut OutputBuilder),
+{
+    build(|root| {
+        root.output("out-1", setup_output_1);
+        root.output("out-2", setup_output_2);
+    })
+}
+
 pub fn build<F>(setup: F) -> Node
 where
     F: FnOnce(&mut TreeBuilder),
 {
     let mut id = IdGenerator::new();
-    let mut tree = Node::create_non_workspace_node(id.next(), "root");
+    let mut tree = Node::create_named_node(id.next(), "root");
     let mut builder = TreeBuilder {
         id: &mut id,
         tree: &mut tree,
@@ -61,7 +72,7 @@ impl<'a> TreeBuilder<'a> {
     where
         F: FnOnce(&mut OutputBuilder),
     {
-        let mut output = Node::create_non_workspace_node(self.id.next(), name);
+        let mut output = Node::create_output(self.id.next(), name);
         let mut builder = OutputBuilder {
             id: &mut self.id,
             output: &mut output,
@@ -115,14 +126,14 @@ impl<'a> WorkspaceBuilder<'a> {
     }
 
     pub fn add_focused_window(self) -> Self {
-        let mut node = Node::create_non_workspace_node(self.id.next(), "Window");
+        let mut node = Node::create_named_node(self.id.next(), "Window");
         node.is_focused = true;
         self.workspace.nodes.push(node);
         self
     }
 
     pub fn add_window(self) -> Self {
-        let node = Node::create_non_workspace_node(self.id.next(), "Window");
+        let node = Node::create_named_node(self.id.next(), "Window");
         self.workspace.nodes.push(node);
         self
     }
