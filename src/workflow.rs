@@ -42,13 +42,13 @@ impl<'a, Node: SwayNode> Workflow<&'a str, &'a Node> {
     }
 
     pub fn move_focus_to_next(&self) -> Vec<Action> {
-        let successors = self.workspaces.successors_of_focused();
-        let successor_on_same_output = successors
-            .iter()
+        let successor_on_same_output = self
+            .workspaces
+            .successors_of_focused()
             .find(|w| self.current_output() == w.output_name());
 
         if let Some(next_on_output) = successor_on_same_output {
-            self.handle_more_workspaces_on_output(next_on_output)
+            self.handle_more_workspaces_on_output(&next_on_output)
         } else {
             self.handle_no_more_workspaces_on_output()
         }
@@ -63,7 +63,6 @@ impl<'a, Node: SwayNode> Workflow<&'a str, &'a Node> {
         let next_missing_workspace = self
             .workspaces
             .successors_of_focused()
-            .iter()
             .zip(expected_successor_number..)
             .find_map(|(w, expected_num)| {
                 if expected_num < w.workspace_number() {
@@ -200,7 +199,6 @@ impl<'a, Node: SwayNode> Workflow<&'a str, &'a Node> {
         let mut actions: Vec<_> = self
             .workspaces
             .successors_of_focused()
-            .into_iter()
             .zip(expected_number_of_successor..)
             .take_while(|(workspace, expected_num)| *expected_num == workspace.workspace_number())
             .map(|(workspace, _)| Action::RenameWorkspace {

@@ -67,16 +67,15 @@ impl<'a, Node: SwayNode> Workspaces<&'a str, &'a Node> {
     }
 
     pub fn successor_of_focused(&self) -> Option<Workspace<&'a str, &'a Node>> {
-        self.successors_of_focused().into_iter().next()
+        self.successors_of_focused().next()
     }
 
-    pub fn successors_of_focused(&self) -> Vec<Workspace<&'a str, &'a Node>> {
+    pub fn successors_of_focused(&self) -> impl Iterator<Item = Workspace<&'a str, &'a Node>> + '_ {
         let focused_num = self.focused_workspace().workspace_number();
         self.workspaces
             .iter()
-            .filter(|w| w.num > focused_num)
-            .cloned()
-            .collect()
+            .filter(move |w| w.num > focused_num)
+            .copied()
     }
 }
 
