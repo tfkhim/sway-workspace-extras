@@ -58,14 +58,6 @@ impl<'a, Node: SwayNode> Workspaces<&'a str, &'a Node> {
         self.focused_workspace
     }
 
-    pub fn last_non_empty_workspace(&self) -> Option<Workspace<&'a str, &'a Node>> {
-        self.workspaces
-            .iter()
-            .filter(|w| w.contains_windows())
-            .max_by_key(|w| w.num)
-            .cloned()
-    }
-
     pub fn successor_of_focused(&self) -> Option<Workspace<&'a str, &'a Node>> {
         self.successors_of_focused().next()
     }

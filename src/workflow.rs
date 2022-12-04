@@ -42,6 +42,63 @@ impl<'a, Node: SwayNode> Workflow<&'a str, &'a Node> {
     }
 
     pub fn move_focus_to_next(&self) -> Vec<Action> {
+        let extend_output =
+            |last_workspace: &Workspace<&'a str, &'a Node>| last_workspace.contains_windows();
+
+        let next_workspace = self.find_next_workspace(extend_output);
+
+        if let Some((next_workspace_number, needs_shift)) = next_workspace {
+            let mut actions = if needs_shift {
+                self.shift_successors()
+            } else {
+                vec![]
+            };
+
+            actions.push(Action::MoveFocus {
+                workspace_num: next_workspace_number,
+            });
+
+            actions
+        } else {
+            vec![]
+        }
+    }
+
+    pub fn move_container_to_next(&self) -> Vec<Action> {
+        if self.focused_workspace_is_empty() {
+            return vec![];
+        }
+
+        let extend_output = |last_workspace: &Workspace<&'a str, &'a Node>| {
+            last_workspace.contains_not_focused_container()
+        };
+
+        let next_workspace = self.find_next_workspace(extend_output);
+
+        if let Some((next_workspace_number, needs_shift)) = next_workspace {
+            let mut actions = if needs_shift {
+                self.shift_successors()
+            } else {
+                vec![]
+            };
+
+            actions.push(Action::MoveContainer {
+                workspace_num: next_workspace_number,
+            });
+            actions.push(Action::MoveFocus {
+                workspace_num: next_workspace_number,
+            });
+
+            actions
+        } else {
+            vec![]
+        }
+    }
+
+    fn find_next_workspace<F>(&self, extend_output: F) -> Option<(i32, bool)>
+    where
+        F: Fn(&Workspace<&'a str, &'a Node>) -> bool,
+    {
         let successor_on_same_output = self
             .workspaces
             .successors_of_focused()
@@ -50,14 +107,14 @@ impl<'a, Node: SwayNode> Workflow<&'a str, &'a Node> {
         if let Some(next_on_output) = successor_on_same_output {
             self.handle_more_workspaces_on_output(&next_on_output)
         } else {
-            self.handle_no_more_workspaces_on_output()
+            self.handle_no_more_workspaces_on_output(extend_output)
         }
     }
 
     fn handle_more_workspaces_on_output(
         &self,
         next_on_output: &'a Workspace<&'a str, &'a Node>,
-    ) -> Vec<Action> {
+    ) -> Option<(i32, bool)> {
         let expected_successor_number = self.focused_workspace_number() + 1;
 
         let next_missing_workspace = self
@@ -77,14 +134,16 @@ impl<'a, Node: SwayNode> Workflow<&'a str, &'a Node> {
             next_missing_workspace.unwrap_or(next_existing_num),
             next_existing_num,
         );
-        vec![Action::MoveFocus {
-            workspace_num: next_workspace,
-        }]
+
+        Some((next_workspace, false))
     }
 
-    fn handle_no_more_workspaces_on_output(&self) -> Vec<Action> {
-        if self.focused_workspace_is_empty() {
-            return vec![];
+    fn handle_no_more_workspaces_on_output<F>(&self, extend_output: F) -> Option<(i32, bool)>
+    where
+        F: Fn(&Workspace<&'a str, &'a Node>) -> bool,
+    {
+        if !extend_output(&self.workspaces.focused_workspace()) {
+            return None;
         };
 
         let expected_successor_number = self.focused_workspace_number() + 1;
@@ -95,65 +154,7 @@ impl<'a, Node: SwayNode> Workflow<&'a str, &'a Node> {
             .map(|w| w.workspace_number() == expected_successor_number)
             .unwrap_or(false);
 
-        let mut actions = if needs_shift {
-            self.shift_successors()
-        } else {
-            vec![]
-        };
-
-        actions.push(Action::MoveFocus {
-            workspace_num: expected_successor_number,
-        });
-
-        actions
-    }
-
-    pub fn move_container_to_next(&self) -> Vec<Action> {
-        if self.focused_workspace_is_empty() {
-            return vec![];
-        }
-
-        let next_workspace = self.find_next_workspace(Workspace::contains_not_focused_container);
-
-        if next_workspace == self.focused_workspace_number() {
-            vec![]
-        } else {
-            vec![
-                Action::MoveContainer {
-                    workspace_num: next_workspace,
-                },
-                Action::MoveFocus {
-                    workspace_num: next_workspace,
-                },
-            ]
-        }
-    }
-
-    fn find_next_workspace<F>(&self, allow_extra_workspace: F) -> i32
-    where
-        F: Fn(&Workspace<&'a str, &'a Node>) -> bool,
-    {
-        let next_workspace_num = self.focused_workspace_number() + 1;
-        min(
-            next_workspace_num,
-            self.max_workspace_number(allow_extra_workspace),
-        )
-    }
-
-    fn max_workspace_number<F: Fn(&Workspace<&'a str, &'a Node>) -> bool>(
-        &self,
-        allow_extra_workspace: F,
-    ) -> i32 {
-        self.workspaces
-            .last_non_empty_workspace()
-            .map(|w| {
-                if allow_extra_workspace(&w) {
-                    w.workspace_number() + 1
-                } else {
-                    w.workspace_number()
-                }
-            })
-            .unwrap_or(1)
+        Some((expected_successor_number, needs_shift))
     }
 
     pub fn move_focus_to_prev(&self) -> Vec<Action> {
