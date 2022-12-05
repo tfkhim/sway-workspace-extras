@@ -83,6 +83,30 @@ fn on_empty_intermediate_workspace() {
     assert_eq!(actions, &[Action::MoveFocus { workspace_num: 1 }]);
 }
 
+#[test]
+fn on_empty_workspace_with_missing_predecessor() {
+    let tree = single_output(|output| {
+        output.workspace(2).focused();
+        output.workspace(3).add_window();
+    });
+
+    let actions = when_move_focus_to_prev(tree);
+
+    assert_eq!(actions, &[Action::MoveFocus { workspace_num: 1 }]);
+}
+
+#[test]
+fn on_non_empty_workspace_with_missing_predecessor() {
+    let tree = single_output(|output| {
+        output.workspace(2).add_focused_window();
+        output.workspace(3).add_window();
+    });
+
+    let actions = when_move_focus_to_prev(tree);
+
+    assert_eq!(actions, &[Action::MoveFocus { workspace_num: 1 }]);
+}
+
 fn when_move_focus_to_prev(tree: Node) -> Vec<Action> {
     let workflow = Workflow::new(&tree).unwrap();
     workflow.move_focus_to_prev()

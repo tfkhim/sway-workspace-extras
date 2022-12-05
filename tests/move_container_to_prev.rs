@@ -130,6 +130,24 @@ fn on_empty_intermediate_workspace() {
     assert_eq!(actions, &[]);
 }
 
+#[test]
+fn missing_predecessor_workspace() {
+    let tree = single_output(|output| {
+        output.workspace(2).add_focused_window();
+        output.workspace(3).add_window();
+    });
+
+    let actions = when_move_container_to_prev(tree);
+
+    assert_eq!(
+        actions,
+        &[
+            Action::MoveContainer { workspace_num: 1 },
+            Action::MoveFocus { workspace_num: 1 }
+        ]
+    );
+}
+
 fn when_move_container_to_prev(tree: Node) -> Vec<Action> {
     let workflow = Workflow::new(&tree).unwrap();
     workflow.move_container_to_prev()
