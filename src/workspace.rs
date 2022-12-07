@@ -69,6 +69,21 @@ impl<'a, Node: SwayNode> Workspaces<&'a str, &'a Node> {
             .filter(move |w| w.num > focused_num)
             .copied()
     }
+
+    pub fn predecessor_of_focused(&self) -> Option<Workspace<&'a str, &'a Node>> {
+        self.predecessors_of_focused().next()
+    }
+
+    pub fn predecessors_of_focused(
+        &self,
+    ) -> impl Iterator<Item = Workspace<&'a str, &'a Node>> + '_ {
+        let focused_num = self.focused_workspace().workspace_number();
+        self.workspaces
+            .iter()
+            .filter(move |w| w.num < focused_num)
+            .rev()
+            .copied()
+    }
 }
 
 #[derive(Debug, Copy, Clone)]
