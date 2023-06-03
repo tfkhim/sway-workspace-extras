@@ -10,7 +10,7 @@
 mod node_builder;
 
 use node_builder::{single_output, two_outputs, Node};
-use sway_workspace_extras::{Action, Workflow};
+use sway_workspace_extras::{Action, Workflow, Workspaces};
 
 #[test]
 fn single_empty_workspace() {
@@ -394,6 +394,6 @@ fn on_last_workspace_of_output_with_gap_on_second_output() {
 }
 
 fn when_move_container_to_next(tree: Node) -> Vec<Action> {
-    let workflow = Workflow::new(&tree).unwrap();
+    let workflow = Workspaces::new(&tree).map(Workflow::new).unwrap();
     workflow.move_container_to_next()
 }

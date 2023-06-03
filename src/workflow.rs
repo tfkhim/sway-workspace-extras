@@ -12,11 +12,7 @@ use std::{
     vec,
 };
 
-use crate::{
-    node_traits::SwayNode,
-    tree_error::TreeError,
-    workspace::{Workspace, Workspaces},
-};
+use crate::{workspace::Workspace, Workspaces};
 
 #[derive(Debug, PartialEq, Eq)]
 pub enum Action {
@@ -32,18 +28,17 @@ pub enum Action {
     },
 }
 
-pub struct Workflow<OutName, Node> {
-    workspaces: Workspaces<OutName, Node>,
+pub struct Workflow<W: Workspace> {
+    workspaces: Workspaces<W>,
 }
 
-impl<'a, Node: SwayNode> Workflow<&'a str, &'a Node> {
-    pub fn new(tree: &'a Node) -> Result<Self, TreeError> {
-        Workspaces::new(tree).map(|workspaces| Self { workspaces })
+impl<W: Workspace> Workflow<W> {
+    pub fn new(workspaces: Workspaces<W>) -> Self {
+        Self { workspaces }
     }
 
     pub fn move_focus_to_next(&self) -> Vec<Action> {
-        let extend_output =
-            |last_workspace: &Workspace<&'a str, &'a Node>| last_workspace.contains_windows();
+        let extend_output = |last_workspace: &W| last_workspace.contains_windows();
 
         let next_workspace = self.find_next_workspace(extend_output);
 
@@ -69,9 +64,7 @@ impl<'a, Node: SwayNode> Workflow<&'a str, &'a Node> {
             return vec![];
         }
 
-        let extend_output = |last_workspace: &Workspace<&'a str, &'a Node>| {
-            last_workspace.contains_not_focused_container()
-        };
+        let extend_output = |last_workspace: &W| last_workspace.contains_not_focused_container();
 
         let next_workspace = self.find_next_workspace(extend_output);
 
@@ -97,7 +90,7 @@ impl<'a, Node: SwayNode> Workflow<&'a str, &'a Node> {
 
     fn find_next_workspace<F>(&self, extend_output: F) -> Option<(i32, bool)>
     where
-        F: Fn(&Workspace<&'a str, &'a Node>) -> bool,
+        F: Fn(&W) -> bool,
     {
         let successor_on_same_output = self
             .workspaces
@@ -113,7 +106,7 @@ impl<'a, Node: SwayNode> Workflow<&'a str, &'a Node> {
 
     fn handle_more_successor_workspaces_on_output(
         &self,
-        next_on_output: &'a Workspace<&'a str, &'a Node>,
+        next_on_output: &W,
     ) -> Option<(i32, bool)> {
         let expected_successor_number = self.focused_workspace_number() + 1;
 
@@ -143,7 +136,7 @@ impl<'a, Node: SwayNode> Workflow<&'a str, &'a Node> {
         extend_output: F,
     ) -> Option<(i32, bool)>
     where
-        F: Fn(&Workspace<&'a str, &'a Node>) -> bool,
+        F: Fn(&W) -> bool,
     {
         if !extend_output(&self.workspaces.focused_workspace()) {
             return None;
@@ -194,10 +187,7 @@ impl<'a, Node: SwayNode> Workflow<&'a str, &'a Node> {
         }
     }
 
-    fn handle_more_predecessor_workspaces_on_output(
-        &self,
-        prev_workspace: Workspace<&'a str, &'a Node>,
-    ) -> Option<i32> {
+    fn handle_more_predecessor_workspaces_on_output(&self, prev_workspace: W) -> Option<i32> {
         let expected_predecessor_number = self.focused_workspace_number() - 1;
 
         let last_missing_workspace = self
@@ -267,7 +257,7 @@ impl<'a, Node: SwayNode> Workflow<&'a str, &'a Node> {
         !self.workspaces.focused_workspace().contains_windows()
     }
 
-    fn current_output(&self) -> &'a str {
+    fn current_output(&self) -> W::OutputName {
         self.workspaces.focused_workspace().output_name()
     }
 }

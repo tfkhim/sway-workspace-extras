@@ -12,12 +12,22 @@ use crate::is_scratchpad::IsScratchpad;
 use crate::node_traits::SwayNode;
 use crate::tree_error::TreeError;
 
-pub struct Workspaces<OutName, Node> {
-    workspaces: Vec<Workspace<OutName, Node>>,
-    focused_workspace: Workspace<OutName, Node>,
+pub trait Workspace: Copy {
+    type OutputName: Eq;
+
+    fn workspace_number(&self) -> i32;
+    fn output_name(&self) -> Self::OutputName;
+    fn contains_windows(&self) -> bool;
+    fn is_focused(&self) -> bool;
+    fn contains_not_focused_container(&self) -> bool;
 }
 
-impl<'a, Node: SwayNode> Workspaces<&'a str, &'a Node> {
+pub struct Workspaces<W: Workspace> {
+    workspaces: Vec<W>,
+    focused_workspace: W,
+}
+
+impl<'a, Node: SwayNode> Workspaces<SwayWorkspace<&'a str, &'a Node>> {
     pub fn new(tree: &'a Node) -> Result<Self, TreeError> {
         let mut workspaces = Self::collect_regular_workspaces(tree)?;
         workspaces.sort_by_key(|w| w.num);
@@ -32,21 +42,21 @@ impl<'a, Node: SwayNode> Workspaces<&'a str, &'a Node> {
 
     fn collect_regular_workspaces(
         tree: &'a Node,
-    ) -> Result<Vec<Workspace<&'a str, &'a Node>>, TreeError> {
+    ) -> Result<Vec<SwayWorkspace<&'a str, &'a Node>>, TreeError> {
         tree.find_all_nodes_by(SwayNode::is_output)
             .into_iter()
             .flat_map(|o| {
                 o.find_all_nodes_by(SwayNode::is_workspace)
                     .into_iter()
                     .filter(|w| !w.is_scratchpad_workspace())
-                    .map(|w| Workspace::new(o.get_name(), w))
+                    .map(|w| SwayWorkspace::new(o.get_name(), w))
             })
             .collect::<Result<Vec<_>, _>>()
     }
+}
 
-    fn find_focused_workspace(
-        workspaces: &[Workspace<&'a str, &'a Node>],
-    ) -> Result<Workspace<&'a str, &'a Node>, TreeError> {
+impl<W: Workspace> Workspaces<W> {
+    fn find_focused_workspace(workspaces: &[W]) -> Result<W, TreeError> {
         workspaces
             .iter()
             .find(|w| w.is_focused())
@@ -54,46 +64,44 @@ impl<'a, Node: SwayNode> Workspaces<&'a str, &'a Node> {
             .ok_or(TreeError::NoFocusedWorkspace())
     }
 
-    pub fn focused_workspace(&self) -> Workspace<&'a str, &'a Node> {
+    pub fn focused_workspace(&self) -> W {
         self.focused_workspace
     }
 
-    pub fn successor_of_focused(&self) -> Option<Workspace<&'a str, &'a Node>> {
+    pub fn successor_of_focused(&self) -> Option<W> {
         self.successors_of_focused().next()
     }
 
-    pub fn successors_of_focused(&self) -> impl Iterator<Item = Workspace<&'a str, &'a Node>> + '_ {
+    pub fn successors_of_focused(&self) -> impl Iterator<Item = W> + '_ {
         let focused_num = self.focused_workspace().workspace_number();
         self.workspaces
             .iter()
-            .filter(move |w| w.num > focused_num)
+            .filter(move |w| w.workspace_number() > focused_num)
             .copied()
     }
 
-    pub fn predecessor_of_focused(&self) -> Option<Workspace<&'a str, &'a Node>> {
+    pub fn predecessor_of_focused(&self) -> Option<W> {
         self.predecessors_of_focused().next()
     }
 
-    pub fn predecessors_of_focused(
-        &self,
-    ) -> impl Iterator<Item = Workspace<&'a str, &'a Node>> + '_ {
+    pub fn predecessors_of_focused(&self) -> impl Iterator<Item = W> + '_ {
         let focused_num = self.focused_workspace().workspace_number();
         self.workspaces
             .iter()
-            .filter(move |w| w.num < focused_num)
+            .filter(move |w| w.workspace_number() < focused_num)
             .rev()
             .copied()
     }
 }
 
 #[derive(Debug, Copy, Clone)]
-pub struct Workspace<OutName, Node> {
+pub struct SwayWorkspace<OutName, Node> {
     output: OutName,
     node: Node,
     num: i32,
 }
 
-impl<'a, Node: SwayNode> Workspace<&'a str, &'a Node> {
+impl<'a, Node: SwayNode> SwayWorkspace<&'a str, &'a Node> {
     fn new(output: &'a Option<String>, node: &'a Node) -> Result<Self, TreeError> {
         let output = output
             .as_ref()
@@ -106,24 +114,28 @@ impl<'a, Node: SwayNode> Workspace<&'a str, &'a Node> {
 
         Ok(Self { output, num, node })
     }
+}
 
-    pub fn workspace_number(&self) -> i32 {
+impl<'a, Node: SwayNode> Workspace for SwayWorkspace<&'a str, &'a Node> {
+    type OutputName = &'a str;
+
+    fn workspace_number(&self) -> i32 {
         self.num
     }
 
-    pub fn output_name(&self) -> &'a str {
+    fn output_name(&self) -> &'a str {
         self.output
     }
 
-    pub fn contains_windows(&self) -> bool {
+    fn contains_windows(&self) -> bool {
         !self.node.get_nodes().is_empty() || !self.node.get_floating_nodes().is_empty()
     }
 
-    pub fn is_focused(&self) -> bool {
+    fn is_focused(&self) -> bool {
         self.node.find_as_ref(|n| n.is_focused()).is_some()
     }
 
-    pub fn contains_not_focused_container(&self) -> bool {
+    fn contains_not_focused_container(&self) -> bool {
         self.node
             .get_nodes()
             .iter()
