@@ -27,10 +27,9 @@ pub struct Workspaces<W: Workspace> {
     focused_workspace: W,
 }
 
-impl<'a, Node: SwayNode> Workspaces<SwayWorkspace<&'a str, &'a Node>> {
-    pub fn new(tree: &'a Node) -> Result<Self, TreeError> {
-        let mut workspaces = Self::collect_regular_workspaces(tree)?;
-        workspaces.sort_by_key(|w| w.num);
+impl<W: Workspace> Workspaces<W> {
+    pub fn new(mut workspaces: Vec<W>) -> Result<Self, TreeError> {
+        workspaces.sort_by_key(W::workspace_number);
 
         let focused_workspace = Self::find_focused_workspace(&workspaces)?;
 
@@ -40,22 +39,6 @@ impl<'a, Node: SwayNode> Workspaces<SwayWorkspace<&'a str, &'a Node>> {
         })
     }
 
-    fn collect_regular_workspaces(
-        tree: &'a Node,
-    ) -> Result<Vec<SwayWorkspace<&'a str, &'a Node>>, TreeError> {
-        tree.find_all_nodes_by(SwayNode::is_output)
-            .into_iter()
-            .flat_map(|o| {
-                o.find_all_nodes_by(SwayNode::is_workspace)
-                    .into_iter()
-                    .filter(|w| !w.is_scratchpad_workspace())
-                    .map(|w| SwayWorkspace::new(o.get_name(), w))
-            })
-            .collect::<Result<Vec<_>, _>>()
-    }
-}
-
-impl<W: Workspace> Workspaces<W> {
     fn find_focused_workspace(workspaces: &[W]) -> Result<W, TreeError> {
         workspaces
             .iter()
@@ -96,23 +79,49 @@ impl<W: Workspace> Workspaces<W> {
 
 #[derive(Debug, Copy, Clone)]
 pub struct SwayWorkspace<OutName, Node> {
-    output: OutName,
-    node: Node,
+    output_name: OutName,
+    workspace: Node,
     num: i32,
 }
 
+pub fn get_workspaces_of<'a, Node: SwayNode>(
+    tree: &'a Node,
+) -> Result<Workspaces<SwayWorkspace<&'a str, &'a Node>>, TreeError> {
+    let output_to_workspaces = |output: &'a Node| {
+        output
+            .find_all_nodes_by(SwayNode::is_workspace)
+            .into_iter()
+            .filter(|w| !w.is_scratchpad_workspace())
+            .map(|w| SwayWorkspace::new_from_output_and_workspace_nodes(output, w))
+    };
+
+    tree.find_all_nodes_by(SwayNode::is_output)
+        .into_iter()
+        .flat_map(output_to_workspaces)
+        .collect::<Result<Vec<_>, _>>()
+        .and_then(Workspaces::new)
+}
+
 impl<'a, Node: SwayNode> SwayWorkspace<&'a str, &'a Node> {
-    fn new(output: &'a Option<String>, node: &'a Node) -> Result<Self, TreeError> {
-        let output = output
+    fn new_from_output_and_workspace_nodes(
+        output: &'a Node,
+        workspace: &'a Node,
+    ) -> Result<Self, TreeError> {
+        let output_name = output
+            .get_name()
             .as_ref()
             .map(String::as_str)
-            .ok_or_else(|| TreeError::MissingOutputParent(node.get_id()))?;
+            .ok_or_else(|| TreeError::MissingOutputName(output.get_id()))?;
 
-        let num = node
+        let num = workspace
             .get_num()
-            .ok_or_else(|| TreeError::MissingWorkspaceNumber(node.get_id()))?;
+            .ok_or_else(|| TreeError::MissingWorkspaceNumber(workspace.get_id()))?;
 
-        Ok(Self { output, num, node })
+        Ok(Self {
+            output_name,
+            num,
+            workspace,
+        })
     }
 }
 
@@ -124,22 +133,22 @@ impl<'a, Node: SwayNode> Workspace for SwayWorkspace<&'a str, &'a Node> {
     }
 
     fn output_name(&self) -> &'a str {
-        self.output
+        self.output_name
     }
 
     fn contains_windows(&self) -> bool {
-        !self.node.get_nodes().is_empty() || !self.node.get_floating_nodes().is_empty()
+        !self.workspace.get_nodes().is_empty() || !self.workspace.get_floating_nodes().is_empty()
     }
 
     fn is_focused(&self) -> bool {
-        self.node.find_as_ref(|n| n.is_focused()).is_some()
+        self.workspace.find_as_ref(|n| n.is_focused()).is_some()
     }
 
     fn contains_not_focused_container(&self) -> bool {
-        self.node
+        self.workspace
             .get_nodes()
             .iter()
-            .chain(self.node.get_floating_nodes().iter())
+            .chain(self.workspace.get_floating_nodes().iter())
             .any(|node| !node.is_focused())
     }
 }

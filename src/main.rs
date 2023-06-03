@@ -14,7 +14,8 @@ use application_error::Error;
 use clap::{Parser, Subcommand};
 use std::process::ExitCode;
 use std::process::Termination;
-use sway_workspace_extras::{Action, Workflow, Workspaces};
+use sway_workspace_extras::get_workspaces_of;
+use sway_workspace_extras::{Action, Workflow};
 use swayipc::Connection;
 
 #[derive(Parser)]
@@ -46,8 +47,7 @@ fn run_program() -> Result<(), Error> {
     let mut connection = Connection::new()?;
     let tree = connection.get_tree()?;
 
-    let workspaces = Workspaces::new(&tree)?;
-    let workflow = Workflow::new(workspaces);
+    let workflow = get_workspaces_of(&tree).map(Workflow::new)?;
 
     let actions = match cli.command {
         Commands::Next => workflow.move_focus_to_next(),
