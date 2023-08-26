@@ -51,6 +51,10 @@ impl<W: Workspace> Workspaces<W> {
         self.focused_workspace
     }
 
+    pub fn max_workspace_number(&self) -> Option<i32> {
+        self.workspaces.last().map(|w| w.workspace_number())
+    }
+
     pub fn successor_of_focused(&self) -> Option<W> {
         self.successors_of_focused().next()
     }

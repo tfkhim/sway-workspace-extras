@@ -38,9 +38,8 @@ impl<W: Workspace> Workflow<W> {
     }
 
     pub fn move_focus_to_next(&self) -> Vec<Action> {
-        let extend_output = |last_workspace: &W| last_workspace.contains_windows();
-
-        let next_workspace = self.find_next_workspace(extend_output);
+        let next_workspace =
+            self.find_next_workspace(self.workspaces.focused_workspace().contains_windows());
 
         if let Some((next_workspace_number, needs_shift)) = next_workspace {
             let mut actions = if needs_shift {
@@ -64,9 +63,11 @@ impl<W: Workspace> Workflow<W> {
             return vec![];
         }
 
-        let extend_output = |last_workspace: &W| last_workspace.contains_not_focused_container();
-
-        let next_workspace = self.find_next_workspace(extend_output);
+        let next_workspace = self.find_next_workspace(
+            self.workspaces
+                .focused_workspace()
+                .contains_not_focused_container(),
+        );
 
         if let Some((next_workspace_number, needs_shift)) = next_workspace {
             let mut actions = if needs_shift {
@@ -88,69 +89,43 @@ impl<W: Workspace> Workflow<W> {
         }
     }
 
-    fn find_next_workspace<F>(&self, extend_output: F) -> Option<(i32, bool)>
-    where
-        F: Fn(&W) -> bool,
-    {
-        let successor_on_same_output = self
+    fn find_next_workspace(&self, extend_output: bool) -> Option<(i32, bool)> {
+        let mut next_workspace = None;
+        let mut next_none_existing_workspace =
+            self.workspaces.max_workspace_number().unwrap_or(0) + 1;
+        let mut next_workspace_on_same_output = None;
+
+        for (workspace, expected_workspace_number) in self
             .workspaces
             .successors_of_focused()
-            .find(|w| self.current_output() == w.output_name());
+            .zip(self.focused_workspace_number() + 1..)
+        {
+            next_workspace.get_or_insert(workspace);
 
-        if let Some(next_on_output) = successor_on_same_output {
-            self.handle_more_successor_workspaces_on_output(&next_on_output)
-        } else {
-            self.handle_no_more_successor_workspaces_on_output(extend_output)
+            if workspace.output_name() == self.current_output() {
+                next_workspace_on_same_output.get_or_insert(workspace);
+            };
+
+            if expected_workspace_number < workspace.workspace_number() {
+                next_none_existing_workspace =
+                    min(expected_workspace_number, next_none_existing_workspace);
+            };
         }
-    }
 
-    fn handle_more_successor_workspaces_on_output(
-        &self,
-        next_on_output: &W,
-    ) -> Option<(i32, bool)> {
-        let expected_successor_number = self.focused_workspace_number() + 1;
-
-        let next_missing_workspace = self
-            .workspaces
-            .successors_of_focused()
-            .zip(expected_successor_number..)
-            .find_map(|(w, expected_num)| {
-                if expected_num < w.workspace_number() {
-                    Some(expected_num)
-                } else {
-                    None
-                }
-            });
-
-        let next_existing_num = next_on_output.workspace_number();
-        let next_workspace = min(
-            next_missing_workspace.unwrap_or(next_existing_num),
-            next_existing_num,
-        );
-
-        Some((next_workspace, false))
-    }
-
-    fn handle_no_more_successor_workspaces_on_output<F>(
-        &self,
-        extend_output: F,
-    ) -> Option<(i32, bool)>
-    where
-        F: Fn(&W) -> bool,
-    {
-        if !extend_output(&self.workspaces.focused_workspace()) {
-            return None;
-        };
-
-        let expected_successor_number = self.focused_workspace_number() + 1;
-
-        let needs_shift = self
-            .workspaces
-            .successor_of_focused()
-            .map(|w| w.workspace_number() == expected_successor_number)
-            .unwrap_or(false);
-
-        Some((expected_successor_number, needs_shift))
+        match next_workspace_on_same_output {
+            None if extend_output => Some((
+                self.focused_workspace_number() + 1,
+                next_workspace.is_some(),
+            )),
+            Some(next_on_output) => Some((
+                min(
+                    next_none_existing_workspace,
+                    next_on_output.workspace_number(),
+                ),
+                false,
+            )),
+            _ => None,
+        }
     }
 
     pub fn move_focus_to_prev(&self) -> Vec<Action> {
