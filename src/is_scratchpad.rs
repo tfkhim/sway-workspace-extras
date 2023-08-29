@@ -35,7 +35,7 @@ mod tests {
 
         let is_scratchpad = node.is_scratchpad_workspace();
 
-        assert_eq!(is_scratchpad, false);
+        assert!(!is_scratchpad);
     }
 
     #[test]
@@ -44,7 +44,7 @@ mod tests {
 
         let is_scratchpad = node.is_scratchpad_workspace();
 
-        assert_eq!(is_scratchpad, false);
+        assert!(!is_scratchpad);
     }
 
     #[test]
@@ -53,7 +53,7 @@ mod tests {
 
         let is_scratchpad = node.is_scratchpad_workspace();
 
-        assert_eq!(is_scratchpad, true);
+        assert!(is_scratchpad);
     }
 
     fn given_node_without_name() -> TestNode {

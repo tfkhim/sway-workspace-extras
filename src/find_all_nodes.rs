@@ -112,7 +112,7 @@ mod tests {
     }
 
     impl NodeWithChildren for TestNode {
-        fn get_nodes<'a>(&'a self) -> &Vec<TestNode> {
+        fn get_nodes(&self) -> &Vec<TestNode> {
             &self.nodes
         }
 

@@ -74,7 +74,7 @@ impl<'a> TreeBuilder<'a> {
     {
         let mut output = Node::create_output(self.id.next(), name);
         let mut builder = OutputBuilder {
-            id: &mut self.id,
+            id: self.id,
             output: &mut output,
         };
         setup(&mut builder);
