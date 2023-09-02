@@ -6,11 +6,26 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
+      - name: Setup Nix store caching
+        uses: actions/cache@v3
+        id: nix-cache
+        with:
+          path: /tmp/nixcache
+          key: nix-${{ runner.os }}-${{ hashFiles('flake.lock') }}
+
       - name: Install Nix
         uses: cachix/install-nix-action@v22
 
+      - name: Import Nix store cache
+        if: steps.nix-cache.outputs.cache-hit == 'true'
+        run: nix copy --from /tmp/nixcache --no-check-sigs .#devShells.x86_64-linux.default
+
       - name: Install required Nix packages
         run: nix develop --command true
+
+      - name: "Export Nix store cache"
+        if: steps.nix-cache.outputs.cache-hit != 'true'
+        run: nix copy --to /tmp/nixcache --no-check-sigs .#devShells.x86_64-linux.default
 
       - name: Check
         run: nix develop --command cargo check --all-targets
