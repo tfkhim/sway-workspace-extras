@@ -1,6 +1,6 @@
 [package]
 name = "sway-workspace-extras"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2021"
 description = "A set of commands to move focus or containers to new Sway workpaces"
 authors = ["Thomas Himmelstoss <9889638+tfkhim@users.noreply.github.com>"]
