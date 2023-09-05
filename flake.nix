@@ -39,6 +39,13 @@
 
             buildInputs = with pkgs.lib; [ ]
               ++ optional pkgs.stdenv.isDarwin pkgs.libiconv;
+
+            meta = with pkgs.lib; {
+              description = "A set of commands to move focus or containers to new Sway workspaces";
+              license = licenses.mit;
+              platforms = platforms.linux;
+              mainProgram = "sway-workspace-extras";
+            };
           };
 
           default = self.packages.${system}.package;
