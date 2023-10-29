@@ -56,7 +56,7 @@
         sway-workspace-extras = self.packages.${prev.system}.default;
       };
 
-      devShells = forSupportedSystems ({ system, pkgs, ... }:
+      devShells = forSupportedSystems ({ system, pkgs, craneLib, ... }:
         let
           fix = pkgs.writeShellScriptBin "fix" ''
             cargo fmt
@@ -72,14 +72,10 @@
           '';
         in
         {
-          default = pkgs.mkShell {
+          default = craneLib.devShell {
             inputsFrom = [ self.packages.${system}.package ];
 
-            nativeBuildInputs = with pkgs; [
-              cargo
-              rustc
-              clippy
-              rustfmt
+            packages = [
               fix
               checkFmt
               lint
