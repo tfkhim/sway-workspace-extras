@@ -38,6 +38,8 @@
             src = craneLib.cleanCargoSource (craneLib.path ./.);
             cargoLock = ./Cargo.lock;
 
+            strictDeps = true;
+
             buildInputs = with pkgs.lib; [ ]
               ++ optional pkgs.stdenv.isDarwin pkgs.libiconv;
 
