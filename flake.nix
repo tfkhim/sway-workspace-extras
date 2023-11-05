@@ -36,7 +36,6 @@
         {
           package = craneLib.buildPackage {
             src = craneLib.cleanCargoSource (craneLib.path ./.);
-            cargoLock = ./Cargo.lock;
 
             strictDeps = true;
 
