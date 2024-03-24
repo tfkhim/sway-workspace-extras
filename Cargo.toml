@@ -8,9 +8,9 @@ license = "MIT"
 repository = "https://github.com/tfkhim/sway-workspace-extras/"
 
 [dependencies]
-clap = {version="4.5.1", features=["derive"] }
+clap = {version="4.5.3", features=["derive"] }
 swayipc = "3.0.2"
-thiserror = "1.0.57"
+thiserror = "1.0.58"
 
 [profile.release]
 lto = true
