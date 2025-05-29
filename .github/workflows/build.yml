@@ -49,11 +49,11 @@ jobs:
       # at /mnt/nix/store. Therefore this job explicitly tests
       # this use case to find regressions early.
       - name: Build Nix package in a non standard store
-        run: nix build --store "${RUNNER_TEMP}/temp-nix-store"
+        run: nix build --store "${PWD}/temp-nix-store"
 
       # The store contains many folders and files that are read
       # only. To ensure the runner can delete the store we change
       # the permissions.
       - name: Cleanup
         if: ${{ always() }}
-        run: chmod -R u+w "${RUNNER_TEMP}/temp-nix-store"
+        run: chmod -R u+w "${PWD}/temp-nix-store"
