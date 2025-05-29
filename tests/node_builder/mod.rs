@@ -67,7 +67,7 @@ pub struct TreeBuilder<'a> {
     tree: &'a mut Node,
 }
 
-impl<'a> TreeBuilder<'a> {
+impl TreeBuilder<'_> {
     pub fn output<F>(&mut self, name: &str, setup: F)
     where
         F: FnOnce(&mut OutputBuilder),
@@ -87,7 +87,7 @@ pub struct OutputBuilder<'a> {
     output: &'a mut Node,
 }
 
-impl<'a> OutputBuilder<'a> {
+impl OutputBuilder<'_> {
     pub fn workspace(&mut self, num: i32) -> WorkspaceBuilder {
         self.add_workspace(Some(num))
     }
@@ -114,7 +114,7 @@ pub struct WorkspaceBuilder<'a> {
     workspace: &'a mut Node,
 }
 
-impl<'a> WorkspaceBuilder<'a> {
+impl WorkspaceBuilder<'_> {
     pub fn focused(self) -> Self {
         self.workspace.is_focused = true;
         self
