@@ -14,30 +14,43 @@
     crane.url = "github:ipetkov/crane";
   };
 
-  outputs = { self, nixpkgs, crane, ... }:
+  outputs =
+    {
+      self,
+      nixpkgs,
+      crane,
+      ...
+    }:
     let
       supportedSystems = [ "x86_64-linux" ];
 
-      forSupportedSystems = generator:
+      forSupportedSystems =
+        generator:
         let
-          generateForSystem = system: generator rec {
-            inherit system;
-            pkgs = nixpkgs.legacyPackages.${system};
-            craneLib = crane.mkLib pkgs;
-          };
+          generateForSystem =
+            system:
+            generator rec {
+              inherit system;
+              pkgs = nixpkgs.legacyPackages.${system};
+              craneLib = crane.mkLib pkgs;
+            };
         in
         nixpkgs.lib.genAttrs supportedSystems generateForSystem;
     in
     {
-      packages = forSupportedSystems ({ system, pkgs, craneLib }:
+      packages = forSupportedSystems (
+        {
+          system,
+          pkgs,
+          craneLib,
+        }:
         {
           package = craneLib.buildPackage {
             src = craneLib.cleanCargoSource (craneLib.path ./.);
 
             strictDeps = true;
 
-            buildInputs = with pkgs.lib; [ ]
-              ++ optional pkgs.stdenv.isDarwin pkgs.libiconv;
+            buildInputs = with pkgs.lib; [ ] ++ optional pkgs.stdenv.isDarwin pkgs.libiconv;
 
             meta = with pkgs.lib; {
               description = "A set of commands to move focus or containers to new Sway workspaces";
@@ -48,13 +61,20 @@
           };
 
           default = self.packages.${system}.package;
-        });
+        }
+      );
 
       overlays.addPackage = final: prev: {
         sway-workspace-extras = self.packages.${prev.system}.default;
       };
 
-      devShells = forSupportedSystems ({ system, pkgs, craneLib, ... }:
+      devShells = forSupportedSystems (
+        {
+          system,
+          pkgs,
+          craneLib,
+          ...
+        }:
         let
           fix = pkgs.writeShellScriptBin "fix" ''
             cargo fmt
@@ -84,8 +104,9 @@
               lint
             ];
           };
-        });
+        }
+      );
 
-      formatter = forSupportedSystems ({ pkgs, ... }: pkgs.nixpkgs-fmt);
+      formatter = forSupportedSystems ({ pkgs, ... }: pkgs.nixfmt-tree);
     };
 }
