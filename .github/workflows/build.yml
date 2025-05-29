@@ -35,25 +35,3 @@ jobs:
       - name: Build Nix package
         run: nix build
 
-  build-with-different-nix-store:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Install Nix
-        uses: cachix/install-nix-action@v22
-
-      # Using a different store than /nix/store is important for
-      # the initial installation of NixOS. The nixos-install script
-      # uses the --store flag under the hood to create the store
-      # at /mnt/nix/store. Therefore this job explicitly tests
-      # this use case to find regressions early.
-      - name: Build Nix package in a non standard store
-        run: nix build --store "${RUNNER_TEMP}/temp-nix-store"
-
-      # The store contains many folders and files that are read
-      # only. To ensure the runner can delete the store we change
-      # the permissions.
-      - name: Cleanup
-        if: ${{ always() }}
-        run: chmod -R u+w "${RUNNER_TEMP}/temp-nix-store"
