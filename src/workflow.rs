@@ -12,7 +12,7 @@ use std::{
     vec,
 };
 
-use crate::{workspace::Workspace, Workspaces};
+use crate::{Workspaces, workspace::Workspace};
 
 #[derive(Debug, PartialEq, Eq)]
 pub enum Action {

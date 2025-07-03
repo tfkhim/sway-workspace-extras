@@ -9,8 +9,8 @@
 
 mod node_builder;
 
-use node_builder::{single_output, two_outputs, Node};
-use sway_workspace_extras::{get_workspaces_of, Action, Workflow};
+use node_builder::{Node, single_output, two_outputs};
+use sway_workspace_extras::{Action, Workflow, get_workspaces_of};
 
 #[test]
 fn single_empty_workspace() {
