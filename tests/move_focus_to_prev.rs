@@ -319,6 +319,18 @@ fn workspaces_separated_by_different_output_with_gap_before_second_output() {
     assert_eq!(actions, &[Action::MoveFocus { workspace_num: 2 }]);
 }
 
+#[test]
+fn supports_named_workspaces() {
+    let tree = single_output(|output| {
+        output.named_workspace(1, "ws-1").add_window();
+        output.named_workspace(2, "ws-2").focused();
+    });
+
+    let actions = when_move_focus_to_prev(tree);
+
+    assert_eq!(actions, &[Action::MoveFocus { workspace_num: 1 }]);
+}
+
 fn when_move_focus_to_prev(tree: Node) -> Vec<Action> {
     let workflow = get_workspaces_of(&tree).map(Workflow::new).unwrap();
     workflow.move_focus_to_prev()

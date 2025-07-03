@@ -223,8 +223,8 @@ fn two_windows_on_first_output_with_empty_second_output() {
         actions,
         &[
             Action::RenameWorkspace {
-                workspace_num: 2,
-                new_workspace_num: 3
+                workspace_name: "2".to_owned(),
+                new_workspace_name: "3".to_owned(),
             },
             Action::MoveContainer { workspace_num: 2 },
             Action::MoveFocus { workspace_num: 2 }
@@ -265,8 +265,8 @@ fn two_windows_on_first_output_with_non_empty_second_output() {
         actions,
         &[
             Action::RenameWorkspace {
-                workspace_num: 2,
-                new_workspace_num: 3
+                workspace_name: "2".to_owned(),
+                new_workspace_name: "3".to_owned(),
             },
             Action::MoveContainer { workspace_num: 2 },
             Action::MoveFocus { workspace_num: 2 }
@@ -384,12 +384,37 @@ fn on_last_workspace_of_output_with_gap_on_second_output() {
         actions,
         &[
             Action::RenameWorkspace {
-                workspace_num: 3,
-                new_workspace_num: 4
+                workspace_name: "3".to_owned(),
+                new_workspace_name: "4".to_owned(),
             },
             Action::MoveContainer { workspace_num: 3 },
             Action::MoveFocus { workspace_num: 3 }
         ]
+    );
+}
+
+#[test]
+fn supports_named_workspaces() {
+    let tree = two_outputs(
+        |output_1| {
+            output_1
+                .named_workspace(1, "ws-1")
+                .add_focused_window()
+                .add_window();
+        },
+        |output_2| {
+            output_2.named_workspace(2, "ws-2");
+        },
+    );
+
+    let actions = when_move_container_to_next(tree);
+
+    assert_eq!(
+        actions[0],
+        Action::RenameWorkspace {
+            workspace_name: "2: ws-2".to_owned(),
+            new_workspace_name: "3: ws-2".to_owned(),
+        },
     );
 }
 

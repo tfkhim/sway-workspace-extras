@@ -13,10 +13,10 @@ use crate::node_traits::SwayNode;
 use crate::tree_error::TreeError;
 
 pub trait Workspace: Copy {
-    type OutputName: Eq;
-
+    fn workspace_name(&self) -> &str;
+    fn workspace_name_without_number(&self) -> &str;
     fn workspace_number(&self) -> i32;
-    fn output_name(&self) -> Self::OutputName;
+    fn output_name(&self) -> &str;
     fn contains_windows(&self) -> bool;
     fn is_focused(&self) -> bool;
     fn contains_not_focused_container(&self) -> bool;
@@ -47,8 +47,8 @@ impl<W: Workspace> Workspaces<W> {
             .ok_or(TreeError::NoFocusedWorkspace())
     }
 
-    pub fn focused_workspace(&self) -> W {
-        self.focused_workspace
+    pub fn focused_workspace(&self) -> &W {
+        &self.focused_workspace
     }
 
     pub fn successor_of_focused(&self) -> Option<W> {
@@ -78,15 +78,16 @@ impl<W: Workspace> Workspaces<W> {
 }
 
 #[derive(Debug, Copy, Clone)]
-pub struct SwayWorkspace<OutName, Node> {
-    output_name: OutName,
+pub struct SwayWorkspace<'a, Node> {
+    workspace_name: &'a str,
+    output_name: &'a str,
     workspace: Node,
     num: i32,
 }
 
 pub fn get_workspaces_of<'a, Node: SwayNode>(
     tree: &'a Node,
-) -> Result<Workspaces<SwayWorkspace<&'a str, &'a Node>>, TreeError> {
+) -> Result<Workspaces<SwayWorkspace<'a, &'a Node>>, TreeError> {
     let output_to_workspaces = |output: &'a Node| {
         output
             .find_all_nodes_by(SwayNode::is_workspace)
@@ -102,11 +103,17 @@ pub fn get_workspaces_of<'a, Node: SwayNode>(
         .and_then(Workspaces::new)
 }
 
-impl<'a, Node: SwayNode> SwayWorkspace<&'a str, &'a Node> {
+impl<'a, Node: SwayNode> SwayWorkspace<'a, &'a Node> {
     fn new_from_output_and_workspace_nodes(
         output: &'a Node,
         workspace: &'a Node,
     ) -> Result<Self, TreeError> {
+        let workspace_name = workspace
+            .get_name()
+            .as_ref()
+            .map(String::as_ref)
+            .ok_or_else(|| TreeError::MissingWorkspaceName(workspace.get_id()))?;
+
         let output_name = output
             .get_name()
             .as_ref()
@@ -118,6 +125,7 @@ impl<'a, Node: SwayNode> SwayWorkspace<&'a str, &'a Node> {
             .ok_or_else(|| TreeError::MissingWorkspaceNumber(workspace.get_id()))?;
 
         Ok(Self {
+            workspace_name,
             output_name,
             num,
             workspace,
@@ -125,14 +133,23 @@ impl<'a, Node: SwayNode> SwayWorkspace<&'a str, &'a Node> {
     }
 }
 
-impl<'a, Node: SwayNode> Workspace for SwayWorkspace<&'a str, &'a Node> {
-    type OutputName = &'a str;
+impl<'a, Node: SwayNode> Workspace for SwayWorkspace<'a, &'a Node> {
+    fn workspace_name(&self) -> &str {
+        self.workspace_name
+    }
+
+    fn workspace_name_without_number(&self) -> &str {
+        self.workspace_name
+            .find(|c: char| !c.is_ascii_digit())
+            .and_then(|first_non_digit_index| self.workspace_name.get(first_non_digit_index..))
+            .unwrap_or("")
+    }
 
     fn workspace_number(&self) -> i32 {
         self.num
     }
 
-    fn output_name(&self) -> &'a str {
+    fn output_name(&self) -> &str {
         self.output_name
     }
 

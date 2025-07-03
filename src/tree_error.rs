@@ -11,6 +11,8 @@ use thiserror::Error as ThisError;
 
 #[derive(Debug, ThisError)]
 pub enum TreeError {
+    #[error("The name property of workspace with id {0} is None")]
+    MissingWorkspaceName(i64),
     #[error("The num property of workspace with id {0} is None")]
     MissingWorkspaceNumber(i64),
     #[error("The output with id {0} doesn't have a name")]

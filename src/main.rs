@@ -72,13 +72,13 @@ fn execute_actions(connection: &mut Connection, actions: &[Action]) -> Result<()
 
 fn action_to_sway_command(action: &Action) -> String {
     match action {
-        Action::MoveFocus { workspace_num } => format!("workspace {}", workspace_num),
+        Action::MoveFocus { workspace_num } => format!("workspace number {}", workspace_num),
         Action::MoveContainer { workspace_num } => {
-            format!("move container to workspace {}", workspace_num)
+            format!("move container to workspace number {}", workspace_num)
         }
         Action::RenameWorkspace {
-            workspace_num,
-            new_workspace_num,
-        } => format!("rename workspace {workspace_num} to  {new_workspace_num}"),
+            workspace_name,
+            new_workspace_name,
+        } => format!("rename workspace \"{workspace_name}\" to \"{new_workspace_name}\""),
     }
 }

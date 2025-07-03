@@ -46,8 +46,8 @@ fn current_workspace_is_empty() {
     assert_eq!(
         actions,
         &[Action::RenameWorkspace {
-            workspace_num: 2,
-            new_workspace_num: 3
+            workspace_name: "2".to_owned(),
+            new_workspace_name: "3".to_owned(),
         }]
     );
 }
@@ -64,8 +64,8 @@ fn current_workspace_not_empty() {
     assert_eq!(
         actions,
         &[Action::RenameWorkspace {
-            workspace_num: 2,
-            new_workspace_num: 3
+            workspace_name: "2".to_owned(),
+            new_workspace_name: "3".to_owned(),
         }]
     );
 }
@@ -95,8 +95,8 @@ fn gap_between_successors() {
     assert_eq!(
         actions,
         &[Action::RenameWorkspace {
-            workspace_num: 2,
-            new_workspace_num: 3
+            workspace_name: "2".to_owned(),
+            new_workspace_name: "3".to_owned(),
         }]
     );
 }
@@ -115,12 +115,12 @@ fn multiple_successors() {
         actions,
         &[
             Action::RenameWorkspace {
-                workspace_num: 3,
-                new_workspace_num: 4
+                workspace_name: "3".to_owned(),
+                new_workspace_name: "4".to_owned(),
             },
             Action::RenameWorkspace {
-                workspace_num: 2,
-                new_workspace_num: 3
+                workspace_name: "2".to_owned(),
+                new_workspace_name: "3".to_owned(),
             }
         ]
     );
@@ -142,8 +142,8 @@ fn two_empty_outputs() {
     assert_eq!(
         actions,
         &[Action::RenameWorkspace {
-            workspace_num: 2,
-            new_workspace_num: 3
+            workspace_name: "2".to_owned(),
+            new_workspace_name: "3".to_owned(),
         }]
     );
 }
@@ -181,8 +181,8 @@ fn gap_between_successors_on_different_outputs() {
     assert_eq!(
         actions,
         &[Action::RenameWorkspace {
-            workspace_num: 2,
-            new_workspace_num: 3
+            workspace_name: "2".to_owned(),
+            new_workspace_name: "3".to_owned(),
         }]
     );
 }
@@ -205,12 +205,12 @@ fn successors_on_different_outputs() {
         actions,
         &[
             Action::RenameWorkspace {
-                workspace_num: 3,
-                new_workspace_num: 4
+                workspace_name: "3".to_owned(),
+                new_workspace_name: "4".to_owned(),
             },
             Action::RenameWorkspace {
-                workspace_num: 2,
-                new_workspace_num: 3
+                workspace_name: "2".to_owned(),
+                new_workspace_name: "3".to_owned(),
             }
         ]
     );
@@ -230,6 +230,24 @@ fn two_workspace_with_gap_between() {
     let actions = when_shift_successors(tree);
 
     assert_eq!(actions, &[]);
+}
+
+#[test]
+fn preserves_workspaces_names() {
+    let tree = single_output(|output| {
+        output.named_workspace(1, "ws-1").focused();
+        output.named_workspace(2, "ws-2").add_window();
+    });
+
+    let actions = when_shift_successors(tree);
+
+    assert_eq!(
+        actions,
+        &[Action::RenameWorkspace {
+            workspace_name: "2: ws-2".to_owned(),
+            new_workspace_name: "3: ws-2".to_owned(),
+        }]
+    );
 }
 
 fn when_shift_successors(tree: Node) -> Vec<Action> {

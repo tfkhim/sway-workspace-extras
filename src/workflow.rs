@@ -23,8 +23,8 @@ pub enum Action {
         workspace_num: i32,
     },
     RenameWorkspace {
-        workspace_num: i32,
-        new_workspace_num: i32,
+        workspace_name: String,
+        new_workspace_name: String,
     },
 }
 
@@ -138,7 +138,7 @@ impl<W: Workspace> Workflow<W> {
     where
         F: Fn(&W) -> bool,
     {
-        if !extend_output(&self.workspaces.focused_workspace()) {
+        if !extend_output(self.workspaces.focused_workspace()) {
             return None;
         };
 
@@ -239,8 +239,12 @@ impl<W: Workspace> Workflow<W> {
             .zip(expected_number_of_successor..)
             .take_while(|(workspace, expected_num)| *expected_num == workspace.workspace_number())
             .map(|(workspace, _)| Action::RenameWorkspace {
-                workspace_num: workspace.workspace_number(),
-                new_workspace_num: workspace.workspace_number() + 1,
+                workspace_name: workspace.workspace_name().into(),
+                new_workspace_name: format!(
+                    "{}{}",
+                    workspace.workspace_number() + 1,
+                    workspace.workspace_name_without_number()
+                ),
             })
             .collect();
 
@@ -257,7 +261,7 @@ impl<W: Workspace> Workflow<W> {
         !self.workspaces.focused_workspace().contains_windows()
     }
 
-    fn current_output(&self) -> W::OutputName {
+    fn current_output(&self) -> &str {
         self.workspaces.focused_workspace().output_name()
     }
 }

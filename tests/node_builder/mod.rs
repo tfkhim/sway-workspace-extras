@@ -89,7 +89,11 @@ pub struct OutputBuilder<'a> {
 
 impl OutputBuilder<'_> {
     pub fn workspace(&mut self, num: i32) -> WorkspaceBuilder {
-        self.add_workspace(Some(num))
+        self.add_workspace(Some(num)).name(format!("{num}"))
+    }
+
+    pub fn named_workspace(&mut self, num: i32, name: &str) -> WorkspaceBuilder {
+        self.add_workspace(Some(num)).name(format!("{num}: {name}"))
     }
 
     fn scratch_workspace(&mut self) {
@@ -120,8 +124,8 @@ impl WorkspaceBuilder<'_> {
         self
     }
 
-    pub fn name(self, name: &str) -> Self {
-        self.workspace.name = Some(name.to_owned());
+    pub fn name<T: Into<String>>(self, name: T) -> Self {
+        self.workspace.name = Some(name.into());
         self
     }
 
