@@ -88,11 +88,11 @@ pub struct OutputBuilder<'a> {
 }
 
 impl OutputBuilder<'_> {
-    pub fn workspace(&mut self, num: i32) -> WorkspaceBuilder {
+    pub fn workspace(&mut self, num: i32) -> WorkspaceBuilder<'_> {
         self.add_workspace(Some(num)).name(format!("{num}"))
     }
 
-    pub fn named_workspace(&mut self, num: i32, name: &str) -> WorkspaceBuilder {
+    pub fn named_workspace(&mut self, num: i32, name: &str) -> WorkspaceBuilder<'_> {
         self.add_workspace(Some(num)).name(format!("{num}: {name}"))
     }
 
@@ -101,7 +101,7 @@ impl OutputBuilder<'_> {
         builder.name("__i3_scratch");
     }
 
-    fn add_workspace(&mut self, num: Option<i32>) -> WorkspaceBuilder {
+    fn add_workspace(&mut self, num: Option<i32>) -> WorkspaceBuilder<'_> {
         self.output
             .nodes
             .push(Node::create_workspace(self.id.next(), num));
